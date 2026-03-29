@@ -493,7 +493,78 @@ function addNewMedicine() {
     renderInventory();
 }
         
+       // DELETE FUNCTION
+function deleteMedicine(id) {
+    if(confirm("Are you sure you want to delete this medicine?")) {
+        inventory = inventory.filter(m => m.id !== id);
+        save();
+        renderInventory();
+    }
+}
+
+// EDIT FUNCTION (Form mein data load karne ke liye)
+function editMedicine(id) {
+    const med = inventory.find(m => m.id === id);
+    if(!med) return;
+
+    // Form fields mein purana data bharna
+    document.getElementById('invId').value = med.id;
+    document.getElementById('invName').value = med.name;
+    document.getElementById('invComp').value = med.composition || "";
+    document.getElementById('invCost').value = med.cost || "";
+    document.getElementById('invRate').value = med.rate;
+    document.getElementById('invQty').value = med.qty;
+    document.getElementById('invExp').value = med.expiry;
+
+    // UI Change: Button text change karna
+    document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Medicine';
+    document.getElementById('save-btn').innerText = "Update Medicine";
+    document.getElementById('save-btn').classList.replace('bg-emerald-800', 'bg-blue-600');
     
+    // Scroll to top taaki user form dekh sake
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// SAVE/UPDATE FUNCTION
+function saveMedicine() {
+    const id = document.getElementById('invId').value;
+    const name = document.getElementById('invName').value;
+    const rate = parseFloat(document.getElementById('invRate').value);
+    const qty = parseInt(document.getElementById('invQty').value);
+    const expiry = document.getElementById('invExp').value;
+
+    if(!name || !rate || !qty || !expiry) return alert("Please fill required fields!");
+
+    if(id) {
+        // Agar ID hai, toh UPDATE karo
+        const index = inventory.findIndex(m => m.id == id);
+        inventory[index] = {
+            ...inventory[index],
+            name,
+            composition: document.getElementById('invComp').value,
+            cost: parseFloat(document.getElementById('invCost').value) || 0,
+            rate,
+            qty,
+            expiry
+        };
+    } else {
+        // Agar ID nahi hai, toh Naya ADD karo
+        inventory.push({
+            id: Date.now(),
+            name,
+            composition: document.getElementById('invComp').value,
+            cost: parseFloat(document.getElementById('invCost').value) || 0,
+            rate,
+            qty,
+            expiry
+        });
+    }
+
+    save();
+    renderInventory();
+}
+        
+        
         // Dummy Initial Data
         if(inventory.length === 0) {
             inventory = [
