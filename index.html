@@ -366,67 +366,78 @@ function deleteMed(id) {
             // --- INVENTORY FUNCTION ---
          function renderInventory() {
     setNav('nav-inv');
-    let filter = 'all'; 
+    let currentFilter = 'all'; 
 
     const drawList = (f = 'all', s = "") => {
+        const listContainer = document.getElementById('inv-list');
+        const today = new Date();
+
         let filtered = inventory.filter(m => {
             const matchesSearch = (m.name || "").toLowerCase().includes(s.toLowerCase()) || 
                                  (m.composition || "").toLowerCase().includes(s.toLowerCase());
             
-            const today = new Date();
             const expDate = new Date(m.expiry);
             const monthsToExp = (expDate - today) / (1000 * 60 * 60 * 24 * 30);
 
-            if(f === 'low') return matchesSearch && m.qty < 10;
+            if(f === 'low') return matchesSearch && m.qty < 10 && expDate > today;
             if(f === 'short') return matchesSearch && monthsToExp <= 6 && monthsToExp > 0;
-            if(f === 'expired') return matchesSearch && monthsToExp <= 0;
-            if(f === 'instock') return matchesSearch && m.qty >= 10;
+            if(f === 'expired') return matchesSearch && expDate <= today;
+            if(f === 'instock') return matchesSearch && m.qty >= 10 && monthsToExp > 6;
             return matchesSearch;
         });
 
-        const listContainer = document.getElementById('inv-list');
         listContainer.innerHTML = filtered.map(m => {
             const expDate = new Date(m.expiry);
-            const monthsToExp = (expDate - new Date()) / (1000 * 60 * 60 * 24 * 30);
+            const monthsToExp = (expDate - today) / (1000 * 60 * 60 * 24 * 30);
             
-            let alertClass = "bg-white border-slate-100";
+            // Default Style (In Stock)
+            let bgColor = "#ffffff"; 
+            let borderColor = "#e2e8f0";
             let tag = "";
-            
-            if(expDate <= new Date()) { 
-                alertClass = "bg-red-50 border-red-200"; 
-                tag = '<span class="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full">EXPIRED</span>';
+
+            // Alert Logic & Colors
+            if(expDate <= today) { 
+                bgColor = "#FEF2F2"; // Red 50
+                borderColor = "#FCA5A5"; // Red 300
+                tag = '<span class="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">EXPIRED</span>';
             } else if(monthsToExp <= 6) { 
-                alertClass = "bg-orange-50 border-orange-200"; 
-                tag = '<span class="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded-full">SHORT EXPIRY</span>';
+                bgColor = "#FFF7ED"; // Orange 50
+                borderColor = "#FDBA74"; // Orange 300
+                tag = '<span class="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold">SHORT EXPIRY</span>';
             } else if(m.qty < 10) { 
-                alertClass = "bg-yellow-50 border-yellow-200"; 
-                tag = '<span class="text-[9px] bg-yellow-500 text-white px-2 py-0.5 rounded-full">LOW STOCK</span>';
+                bgColor = "#FEFCE8"; // Yellow 50
+                borderColor = "#FDE047"; // Yellow 300
+                tag = '<span class="text-[9px] bg-yellow-500 text-white px-2 py-0.5 rounded-full font-bold">LOW STOCK</span>';
             }
 
             return `
-                <div class="${alertClass} p-4 rounded-2xl border shadow-sm space-y-3">
+                <div style="background-color: ${bgColor}; border: 1px solid ${borderColor};" class="p-4 rounded-2xl shadow-sm space-y-3">
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <div class="flex items-center gap-2">${tag}<p class="font-bold text-sm">${m.name}</p></div>
-                            <p class="text-[10px] text-slate-500 italic">${m.composition}</p>
-                            <p class="text-xs text-slate-600">Stock: <b>${m.qty}</b> | Exp: ${m.expiry}</p>
+                            <p class="text-[10px] text-slate-500 italic">${m.composition || 'No composition'}</p>
+                            <p class="text-xs text-slate-600 font-medium">Stock: <b>${m.qty}</b> | Exp: ${m.expiry}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-slate-400 line-through">₹${m.cost || 0}</p>
-                            <p class="font-bold text-emerald-700">₹${m.rate}</p>
+                            <p class="text-[10px] text-slate-400 line-through">₹${m.cost || 0}</p>
+                            <p class="font-bold text-emerald-800">₹${m.rate}</p>
                         </div>
                     </div>
-                    <div class="flex gap-2 pt-2 border-t border-slate-100">
-                        <button onclick="editMedicine(${m.id})" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
-                            <i class="fas fa-edit"></i> Edit
+                    <div class="flex gap-2 pt-2 border-t border-black/5">
+                        <button onclick="editMedicine(${m.id})" class="flex-1 py-2 bg-white/50 border border-black/5 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-edit text-blue-600"></i> Edit
                         </button>
-                        <button onclick="deleteMedicine(${m.id})" class="flex-1 py-2 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
-                            <i class="fas fa-trash"></i> Delete
+                        <button onclick="deleteMedicine(${m.id})" class="flex-1 py-2 bg-white/50 border border-black/5 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-trash text-rose-600"></i> Delete
                         </button>
                     </div>
                 </div>
             `;
         }).join('');
+        
+        if(filtered.length === 0) {
+            listContainer.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">No medicines found in this section.</p>`;
+        }
     };
 
     document.getElementById('main-content').innerHTML = `
@@ -444,13 +455,17 @@ function deleteMed(id) {
             <button id="save-btn" onclick="saveMedicine()" class="w-full bg-emerald-800 text-white p-3 rounded-xl font-bold shadow-lg">Save Medicine</button>
         </div>
 
-        <div class="sticky top-0 bg-[#F3F8F5] py-2 space-y-3">
-            <input id="invSearch" oninput="runFilter()" placeholder="Search medicine..." class="w-full p-4 bg-white rounded-2xl shadow-sm text-sm outline-none">
+        <div class="sticky top-0 bg-[#F3F8F5] py-2 space-y-3 z-10">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+                <input id="invSearch" oninput="runFilter()" placeholder="Search medicine..." class="w-full pl-11 p-4 bg-white rounded-2xl shadow-sm text-sm outline-none border border-slate-100">
+            </div>
             <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                <button onclick="runFilter('all')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-emerald-800 text-white">All</button>
-                <button onclick="runFilter('low')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Low Stock</button>
-                <button onclick="runFilter('short')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Short Exp</button>
-                <button onclick="runFilter('expired')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Expired</button>
+                <button onclick="runFilter('all')" class="filter-btn active-f whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-emerald-800 text-white">All</button>
+                <button onclick="runFilter('instock')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">In Stock</button>
+                <button onclick="runFilter('low')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-yellow-600 border border-yellow-200">Low Stock</button>
+                <button onclick="runFilter('short')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-orange-600 border border-orange-200">Short Exp</button>
+                <button onclick="runFilter('expired')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-rose-600 border border-rose-200">Expired</button>
             </div>
         </div>
         <div id="inv-list" class="space-y-3 mt-2"></div>
@@ -462,15 +477,14 @@ function deleteMed(id) {
                 b.classList.remove('bg-emerald-800', 'text-white');
                 b.classList.add('bg-white', 'text-slate-600');
             });
-            event?.target?.classList.add('bg-emerald-800', 'text-white');
-            filter = f;
+            event.target.classList.add('bg-emerald-800', 'text-white');
+            currentFilter = f;
         }
-        drawList(filter, document.getElementById('invSearch').value);
+        drawList(currentFilter, document.getElementById('invSearch').value);
     };
 
     drawList();
          }
-
     
        // DELETE FUNCTION
 function deleteMedicine(id) {
