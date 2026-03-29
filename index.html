@@ -408,6 +408,9 @@ function deleteMed(id) {
                 bgColor = "#FEFCE8"; // Yellow 50
                 borderColor = "#FDE047"; // Yellow 300
                 tag = '<span class="text-[9px] bg-yellow-500 text-white px-2 py-0.5 rounded-full font-bold">LOW STOCK</span>';
+            } else {
+                bgColor = "#F0FDF4"; borderColor = "#BBF7D0"; 
+                tag = '<span class="text-[9px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">SAFE / IN STOCK</span>';
             }
 
             return `
