@@ -363,76 +363,137 @@ function deleteMed(id) {
     `;
 }
 
-            function renderInventory() {
-            setNav('nav-inv');
-            document.getElementById('main-content').innerHTML = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">
-                    <h3 class="font-bold flex items-center gap-2"><i class="fas fa-plus-circle text-emerald-800"></i> Add New Medicine</h3>
-                    <input id="mName" placeholder="Medicine Name" class="w-full bg-slate-50 p-4 rounded-xl text-sm border-none focus:ring-2 ring-emerald-500 outline-none">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input id="mQty" type="number" placeholder="Stock Qty" class="bg-slate-50 p-4 rounded-xl text-sm border-none outline-none">
-                        <input id="mRate" type="number" placeholder="Rate per unit" class="bg-slate-50 p-4 rounded-xl text-sm border-none outline-none">
-                    </div>
-                    <button onclick="addMedicine()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl font-bold shadow-lg shadow-emerald-100">
-                        <i class="fas fa-save mr-2"></i> Save to Inventory
-                    </button>
-                </div>
+            // --- INVENTORY FUNCTION ---
+function renderInventory() {
+    setNav('nav-inv');
+    
+    // Default Filter state (if not global)
+    let filter = 'all'; 
+    let searchTxt = "";
 
-                <div class="mt-6 space-y-3">
-                    <h3 class="font-bold text-slate-600 px-1">Current Stock</h3>
-                    ${inventory.length === 0 ? '<p class="text-center text-slate-400 py-10">No medicines in stock</p>' : 
-                        inventory.map(m => `
-                        <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-50 shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="${m.qty < 10 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'} p-3 rounded-xl">
-                                    <i class="fas fa-capsules"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-sm text-slate-800">${m.name}</p>
-                                    <p class="text-[10px] text-slate-400 uppercase font-bold">Price: ₹${m.rate}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black ${m.qty < 10 ? 'text-rose-600' : 'text-slate-700'}">${m.qty} Units</p>
-                                <button onclick="deleteMed(${m.id})" class="text-rose-400 text-xs mt-1"><i class="fas fa-trash-can"></i></button>
-                            </div>
-                        </div>
-                    `).join('')}
+    const drawList = (f = 'all', s = "") => {
+        let filtered = inventory.filter(m => {
+            const matchesSearch = m.name.toLowerCase().includes(s.toLowerCase()) || 
+                                 m.composition.toLowerCase().includes(s.toLowerCase());
+            
+            const today = new Date();
+            const expDate = new Date(m.expiry);
+            const monthsToExp = (expDate - today) / (1000 * 60 * 60 * 24 * 30);
+
+            if(f === 'low') return matchesSearch && m.qty < 10;
+            if(f === 'short') return matchesSearch && monthsToExp <= 6 && monthsToExp > 0;
+            if(f === 'expired') return matchesSearch && monthsToExp <= 0;
+            if(f === 'instock') return matchesSearch && m.qty >= 10;
+            return matchesSearch;
+        });
+
+        const listContainer = document.getElementById('inv-list');
+        listContainer.innerHTML = filtered.map(m => {
+            const expDate = new Date(m.expiry);
+            const monthsToExp = (expDate - new Date()) / (1000 * 60 * 60 * 24 * 30);
+            
+            // Logic for Color Alerts
+            let alertClass = "bg-white border-slate-100";
+            let tag = "";
+            
+            if(expDate <= new Date()) { 
+                alertClass = "bg-red-50 border-red-200"; 
+                tag = '<span class="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full">EXPIRED</span>';
+            } else if(monthsToExp <= 6) { 
+                alertClass = "bg-orange-50 border-orange-200"; 
+                tag = '<span class="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded-full">SHORT EXPIRY</span>';
+            } else if(m.qty < 10) { 
+                alertClass = "bg-yellow-50 border-yellow-200"; 
+                tag = '<span class="text-[9px] bg-yellow-500 text-white px-2 py-0.5 rounded-full">LOW STOCK</span>';
+            }
+
+            return `
+                <div class="${alertClass} p-4 rounded-2xl border flex justify-between items-center shadow-sm">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">${tag}<p class="font-bold text-sm">${m.name}</p></div>
+                        <p class="text-[10px] text-slate-500 font-medium italic">${m.composition}</p>
+                        <p class="text-xs text-slate-600">Stock: <b>${m.qty}</b> | Exp: ${m.expiry}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400 line-through">₹${m.cost || 0}</p>
+                        <p class="font-bold text-emerald-700">₹${m.rate}</p>
+                    </div>
                 </div>
             `;
-        }
+        }).join('');
+    };
 
-        function addMedicine() {
-            const name = document.getElementById('mName').value;
-            const qty = parseInt(document.getElementById('mQty').value);
-            const rate = parseFloat(document.getElementById('mRate').value);
-            
-            if(!name || isNaN(qty) || isNaN(rate)) {
-                alert("Please enter valid name, quantity and rate");
-                return;
-            }
-            
-            const newMed = {
-                id: Date.now(),
-                name: name,
-                qty: qty,
-                rate: rate,
-                expiry: 'N/A'
-            };
-            
-            inventory.push(newMed);
-            save();
-            renderInventory(); // Refresh list
-        }
+    document.getElementById('main-content').innerHTML = `
+        <div class="bg-white p-5 rounded-3xl shadow-sm space-y-3 mb-6 border border-emerald-50">
+            <h3 class="font-bold text-emerald-900 flex items-center gap-2"><i class="fas fa-plus-circle"></i> Add New Stock</h3>
+            <input id="invName" placeholder="Medicine Name" class="w-full bg-slate-50 p-3 rounded-xl text-sm outline-none ring-emerald-500 focus:ring-1">
+            <input id="invComp" placeholder="Composition (e.g. Paracetamol)" class="w-full bg-slate-50 p-3 rounded-xl text-sm outline-none">
+            <div class="grid grid-cols-2 gap-2">
+                <input id="invCost" type="number" placeholder="Cost Price" class="bg-slate-50 p-3 rounded-xl text-sm outline-none">
+                <input id="invRate" type="number" placeholder="Selling Price" class="bg-slate-50 p-3 rounded-xl text-sm outline-none">
+                <input id="invQty" type="number" placeholder="Quantity" class="bg-slate-50 p-3 rounded-xl text-sm outline-none">
+                <input id="invExp" type="date" class="bg-slate-50 p-3 rounded-xl text-sm outline-none text-slate-400">
+            </div>
+            <button onclick="addNewMedicine()" class="w-full bg-emerald-800 text-white p-3 rounded-xl font-bold shadow-lg">Save to Inventory</button>
+        </div>
 
-        function deleteMed(id) {
-            if(confirm('Kya aap is medicine ko delete karna chahte hain?')) {
-                inventory = inventory.filter(m => m.id !== id);
-                save();
-                renderInventory();
-            }
+        <div class="sticky top-0 bg-[#F3F8F5] py-2 space-y-3">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+                <input id="invSearch" oninput="runFilter()" placeholder="Search medicine or composition..." class="w-full pl-12 p-4 bg-white rounded-2xl shadow-sm text-sm outline-none">
+            </div>
+            
+            <div class="flex gap-2 overflow-x-auto pb-2 hide-scroll no-scrollbar">
+                <button onclick="runFilter('all')" class="filter-btn active-f whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-100">All</button>
+                <button onclick="runFilter('instock')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-600">In Stock</button>
+                <button onclick="runFilter('low')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white text-yellow-600 border border-yellow-100">Low Stock</button>
+                <button onclick="runFilter('short')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white text-orange-600 border border-orange-100">Short Exp</button>
+                <button onclick="runFilter('expired')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white text-rose-600 border border-rose-100">Expired</button>
+            </div>
+        </div>
+
+        <div id="inv-list" class="space-y-3 mt-2"></div>
+    `;
+
+    // Global filters inside scope
+    window.runFilter = (f) => {
+        if(f) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('bg-emerald-800', 'text-white'));
+            event?.target?.classList.add('bg-emerald-800', 'text-white');
+            filter = f;
         }
+        searchTxt = document.getElementById('invSearch').value;
+        drawList(filter, searchTxt);
+    };
+
+    drawList();
+}
+
+function addNewMedicine() {
+    const name = document.getElementById('invName').value;
+    const composition = document.getElementById('invComp').value;
+    const cost = document.getElementById('invCost').value;
+    const rate = document.getElementById('invRate').value;
+    const qty = document.getElementById('invQty').value;
+    const expiry = document.getElementById('invExp').value;
+
+    if(!name || !rate || !qty || !expiry) return alert("Please fill required fields!");
+
+    inventory.push({
+        id: Date.now(),
+        name,
+        composition,
+        cost: parseFloat(cost) || 0,
+        rate: parseFloat(rate),
+        qty: parseInt(qty),
+        expiry
+    });
+
+    save();
+    renderInventory();
+}
         
+    
         // Dummy Initial Data
         if(inventory.length === 0) {
             inventory = [
