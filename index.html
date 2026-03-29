@@ -7,64 +7,62 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #F3F8F5; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
+        body { background-color: #F3F8F5; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        .active-tab { color: #065F46 !important; font-weight: bold; }
+        .active-tab i { color: #065F46; background: #D1FAE5; padding: 10px; border-radius: 12px; }
         .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .active-tab { color: #065F46 !important; }
-        .active-tab i { color: #065F46; background: #D1FAE5; padding: 10px; border-radius: 14px; }
-        .nav-btn { transition: all 0.2s; }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
-    <div id="app" class="max-w-md mx-auto min-h-screen pb-28 relative">
+    <div id="app" class="max-w-md mx-auto min-h-screen pb-24 relative">
         <header class="p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
             <div class="flex items-center gap-2">
                 <div class="bg-emerald-800 p-2 rounded-lg text-white"><i class="fas fa-prescription"></i></div>
                 <h1 class="font-bold text-lg">Pharmacy Manager Pro</h1>
             </div>
-            <button onclick="location.reload()" class="text-slate-400 p-2"><i class="fas fa-sync-alt"></i></button>
+            <button onclick="location.reload()" class="text-slate-400"><i class="fas fa-sync-alt"></i></button>
         </header>
 
         <main id="main-content" class="p-4 space-y-4"></main>
 
-        <nav class="fixed bottom-0 w-full max-w-md glass-nav border-t border-slate-100 flex justify-around py-3 px-2 z-50">
+        <nav class="fixed bottom-0 w-full max-w-md glass-nav border-t border-slate-100 flex justify-around py-3 z-50">
             <button onclick="renderDashboard()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-dash">
-                <i class="fas fa-home"></i><span class="text-[10px] font-bold">Home</span>
+                <i class="fas fa-home"></i><span class="text-[10px]">Home</span>
             </button>
             <button onclick="renderInventory()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-inv">
-                <i class="fas fa-pills"></i><span class="text-[10px] font-bold">Stock</span>
+                <i class="fas fa-pills"></i><span class="text-[10px]">Stock</span>
             </button>
             <button onclick="renderSales()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-sales">
-                <i class="fas fa-shopping-cart"></i><span class="text-[10px] font-bold">Sales</span>
+                <i class="fas fa-shopping-cart"></i><span class="text-[10px]">Sales</span>
             </button>
             <button onclick="renderCustomers()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-cust">
-                <i class="fas fa-user-friends"></i><span class="text-[10px] font-bold">Users</span>
+                <i class="fas fa-user-friends"></i><span class="text-[10px]">Users</span>
             </button>
             <button onclick="renderReports()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-rep">
-                <i class="fas fa-file-invoice-dollar"></i><span class="text-[10px] font-bold">Report</span>
+                <i class="fas fa-file-invoice-dollar"></i><span class="text-[10px]">Report</span>
             </button>
         </nav>
     </div>
 
     <script>
-        // Data Persistence
-        let inventory = JSON.parse(localStorage.getItem('pharma_final_inv')) || [];
-        let sales = JSON.parse(localStorage.getItem('pharma_final_sales')) || [];
-        let expenses = JSON.parse(localStorage.getItem('pharma_final_exp')) || [];
+        // Data Storage
+        let inventory = JSON.parse(localStorage.getItem('ph_stock')) || [];
+        let sales = JSON.parse(localStorage.getItem('ph_sales')) || [];
+        let expenses = JSON.parse(localStorage.getItem('ph_exp')) || [];
         let cart = [];
-        let currentTab = 'new';
-        let searchQuery = "";
+        let currentSaleTab = 'new';
 
         const save = () => {
-            localStorage.setItem('pharma_final_inv', JSON.stringify(inventory));
-            localStorage.setItem('pharma_final_sales', JSON.stringify(sales));
-            localStorage.setItem('pharma_final_exp', JSON.stringify(expenses));
+            localStorage.setItem('ph_stock', JSON.stringify(inventory));
+            localStorage.setItem('ph_sales', JSON.stringify(sales));
+            localStorage.setItem('ph_exp', JSON.stringify(expenses));
         };
 
         const setNav = (id) => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-            document.getElementById(id).classList.add('active-tab');
+            const activeBtn = document.getElementById(id);
+            if(activeBtn) activeBtn.classList.add('active-tab');
             window.scrollTo(0,0);
         };
 
@@ -73,36 +71,21 @@
             setNav('nav-dash');
             const today = new Date().toISOString().split('T')[0];
             const tSales = sales.filter(s => s.date === today).reduce((a, b) => a + b.total, 0);
-            const lowStock = inventory.filter(m => m.qty < 10);
-
+            
             document.getElementById('main-content').innerHTML = `
-                <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex gap-3 ${lowStock.length ? '' : 'hidden'}">
-                    <div class="bg-amber-100 text-amber-600 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div>
-                        <h4 class="font-bold text-amber-900 text-sm">Stock khatam hone wala hai!</h4>
-                        <p class="text-[11px] text-amber-700">${lowStock.length} items are below 10 units.</p>
-                    </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-50 text-center">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Today's Revenue</p>
+                    <h2 class="text-4xl font-black text-emerald-800">₹${tSales}</h2>
                 </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
-                        <p class="text-3xl font-black text-slate-800">${inventory.length}</p>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Inventory</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <p class="text-2xl font-bold">${inventory.length}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Items</p>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
-                        <p class="text-3xl font-black text-emerald-600">₹${tSales}</p>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Today's Cash</p>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <p class="text-2xl font-bold text-rose-500">${inventory.filter(i=>i.qty < 10).length}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Low Stock</p>
                     </div>
-                </div>
-                
-                <h3 class="font-bold text-slate-600 pt-2">Recent Stock Alerts</h3>
-                <div class="space-y-2">
-                    ${lowStock.slice(0,3).map(m => `
-                        <div class="bg-white p-3 rounded-xl border border-slate-50 flex justify-between items-center shadow-sm">
-                            <span class="text-sm font-bold">${m.name}</span>
-                            <span class="text-xs bg-rose-50 text-rose-600 px-2 py-1 rounded-lg font-bold">${m.qty} Left</span>
-                        </div>
-                    `).join('') || '<p class="text-center text-slate-400 text-xs py-5">All stock is healthy.</p>'}
                 </div>
             `;
         }
@@ -111,198 +94,151 @@
         function renderInventory() {
             setNav('nav-inv');
             document.getElementById('main-content').innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-xl font-bold">Medicine Stock</h2>
-                    <button onclick="addMed()" class="bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">+ Add New</button>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-xl">Stock</h2>
+                    <button onclick="addMedicine()" class="bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-bold">+ Add</button>
                 </div>
                 <div class="space-y-3">
                     ${inventory.map(m => `
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-base">${m.name}</h4>
-                                    <p class="text-[11px] text-slate-400 mb-2 italic">${m.composition || 'Generic'}</p>
-                                    <div class="flex gap-2 text-[10px] font-bold">
-                                        <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded">Qty: ${m.qty}</span>
-                                        <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded">₹${m.rate}</span>
-                                        <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded">Exp: ${m.expiry}</span>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col gap-3">
-                                    <button onclick="editMed(${m.id})" class="text-blue-500 bg-blue-50 p-2 rounded-lg"><i class="fas fa-edit text-xs"></i></button>
-                                    <button onclick="deleteMed(${m.id})" class="text-rose-500 bg-rose-50 p-2 rounded-lg"><i class="fas fa-trash text-xs"></i></button>
-                                </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50 flex justify-between">
+                            <div>
+                                <h4 class="font-bold">${m.name}</h4>
+                                <p class="text-[10px] text-slate-400">Qty: ${m.qty} | Rate: ₹${m.rate}</p>
                             </div>
+                            <button onclick="deleteMed(${m.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
                         </div>
-                    `).join('') || '<p class="text-center text-slate-400 py-10 text-sm">Inventory empty.</p>'}
+                    `).join('') || '<p class="text-center py-10 text-slate-400">Inventory is empty</p>'}
                 </div>
             `;
         }
 
-        function addMed() {
-            const name = prompt("Medicine Name:"); if(!name) return;
-            const comp = prompt("Composition (Optional):");
+        function addMedicine() {
+            const name = prompt("Medicine Name:");
             const qty = parseInt(prompt("Quantity:"));
-            const rate = parseFloat(prompt("Rate per unit:"));
-            const exp = prompt("Expiry (YYYY-MM-DD):");
-            inventory.push({ id: Date.now(), name, composition: comp, qty, rate, expiry: exp });
+            const rate = parseFloat(prompt("Rate:"));
+            if(name && qty) {
+                inventory.push({ id: Date.now(), name, qty, rate });
+                save(); renderInventory();
+            }
+        }
+
+        function deleteMed(id) {
+            inventory = inventory.filter(i=>i.id !== id);
             save(); renderInventory();
         }
-
-        function editMed(id) {
-            const m = inventory.find(i=>i.id==id);
-            const nQty = prompt("Edit Quantity:", m.qty);
-            if(nQty !== null) { m.qty = parseInt(nQty); save(); renderInventory(); }
-        }
-
-        function deleteMed(id) { if(confirm("Delete this medicine?")) { inventory = inventory.filter(i=>i.id!==id); save(); renderInventory(); } }
 
         // --- SALES ---
         function renderSales() {
             setNav('nav-sales');
-            const activeLine = "border-b-2 border-emerald-800 text-emerald-800";
+            const activeStyle = "border-b-2 border-emerald-800 text-emerald-800";
             document.getElementById('main-content').innerHTML = `
-                <div class="flex gap-6 border-b border-slate-100 mb-4 font-bold text-sm">
-                    <button onclick="currentTab='new';renderSales()" class="pb-2 ${currentTab==='new'?activeLine:'text-slate-400'}">New Bill</button>
-                    <button onclick="currentTab='history';renderSales()" class="pb-2 ${currentTab==='history'?activeLine:'text-slate-400'}">History</button>
+                <div class="flex gap-6 border-b border-slate-100 font-bold text-sm mb-4">
+                    <button onclick="currentSaleTab='new';renderSales()" class="pb-2 ${currentSaleTab==='new'?activeStyle:'text-slate-400'}">New Bill</button>
+                    <button onclick="currentSaleTab='history';renderSales()" class="pb-2 ${currentSaleTab==='history'?activeStyle:'text-slate-400'}">History</button>
                 </div>
-                <div id="sale-area"></div>
+                <div id="sales-body"></div>
             `;
-            if(currentTab === 'new') renderNewBill(); else renderHistory();
+            if(currentSaleTab === 'new') renderNewSale(); else renderSalesHistory();
         }
 
-        function renderNewBill() {
-            document.getElementById('sale-area').innerHTML = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 mb-4 border border-slate-50">
-                    <input id="cName" oninput="autoCust(this.value)" placeholder="Customer Name (Optional)" class="w-full bg-slate-50 p-4 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">
-                    <input id="cMob" placeholder="Mobile Number" class="w-full bg-slate-50 p-4 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">
-                    <input id="cAddr" placeholder="Address" class="w-full bg-slate-50 p-4 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-50 p-3 rounded-xl">
-                            <label class="text-[9px] font-bold text-slate-400 block uppercase">Date</label>
-                            <input type="date" id="sDate" value="${new Date().toISOString().split('T')[0]}" class="bg-transparent text-xs font-bold w-full outline-none">
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl">
-                            <label class="text-[9px] font-bold text-slate-400 block uppercase">Mode</label>
-                            <select id="sPay" class="bg-transparent text-xs font-bold w-full outline-none">
-                                <option>Cash</option><option>Online</option>
-                            </select>
-                        </div>
+        function renderNewSale() {
+            document.getElementById('sales-body').innerHTML = `
+                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 mb-4">
+                    <input id="cN" placeholder="Customer Name" class="w-full bg-slate-50 p-3 rounded-xl border-none outline-none">
+                    <input id="cM" placeholder="Mobile Number" class="w-full bg-slate-50 p-3 rounded-xl border-none outline-none">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="date" id="sD" value="${new Date().toISOString().split('T')[0]}" class="bg-slate-50 p-3 rounded-xl text-xs">
+                        <select id="sP" class="bg-slate-50 p-3 rounded-xl text-xs"><option>Cash</option><option>Online</option></select>
                     </div>
                 </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">
-                    <h4 class="font-bold text-xs uppercase text-slate-400">Add Items</h4>
+                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
                     <div class="flex gap-2">
-                        <select id="mId" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm border-none ring-1 ring-slate-100">
+                        <select id="mS" class="flex-1 bg-slate-50 p-3 rounded-xl text-xs">
                             <option value="">Select Medicine</option>
-                            ${inventory.map(m => `<option value="${m.id}">${m.name} (${m.qty})</option>`).join('')}
+                            ${inventory.map(i=>`<option value="${i.id}">${i.name} (${i.qty})</option>`).join('')}
                         </select>
-                        <input id="mQty" type="number" placeholder="Qty" class="w-16 bg-slate-50 p-3 rounded-xl text-sm border-none ring-1 ring-slate-100">
-                        <button onclick="toCart()" class="bg-emerald-800 text-white px-4 rounded-xl"><i class="fas fa-plus"></i></button>
+                        <input id="mQ" type="number" placeholder="Qty" class="w-16 bg-slate-50 p-3 rounded-xl">
+                        <button onclick="addToCart()" class="bg-emerald-800 text-white px-4 rounded-xl"><i class="fas fa-plus"></i></button>
                     </div>
-                    <div id="cart-box" class="py-4 space-y-3"></div>
-                    <div class="flex justify-between items-center px-2 border-t pt-4">
-                        <span class="font-bold">Total Amount</span>
-                        <span class="text-xl font-black text-emerald-800" id="total-val">₹0.00</span>
-                    </div>
-                    <button onclick="doSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl font-bold shadow-lg shadow-emerald-50">Finish & Save Bill</button>
+                    <div id="cart-list" class="divide-y divide-slate-50"></div>
+                    <div class="flex justify-between font-black text-lg pt-4"><span>Total</span><span id="total-val">₹0.00</span></div>
+                    <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl font-bold">Confirm Sale</button>
                 </div>
             `;
-            updateCart();
+            updateCartUI();
         }
 
-        function autoCust(name) {
-            const found = sales.find(s => s.name.toLowerCase() === name.toLowerCase());
-            if(found) { document.getElementById('cMob').value = found.mobile; document.getElementById('cAddr').value = found.address; }
-        }
-
-        function toCart() {
-            const id = document.getElementById('mId').value;
-            const qty = parseInt(document.getElementById('mQty').value);
+        function addToCart() {
+            const id = document.getElementById('mS').value;
+            const qty = parseInt(document.getElementById('mQ').value);
             const med = inventory.find(i=>i.id == id);
-            if(!med || !qty || qty > med.qty) return alert("Stock unavailable or invalid qty!");
-            cart.push({ id: med.id, name: med.name, qty, rate: med.rate, total: med.rate * qty });
-            updateCart();
+            if(med && qty > 0 && qty <= med.qty) {
+                cart.push({ id: med.id, name: med.name, qty, rate: med.rate, total: med.rate * qty });
+                updateCartUI();
+            } else { alert("Check stock/qty"); }
         }
 
-        function updateCart() {
-            const box = document.getElementById('cart-box');
-            if(!box) return;
-            if(cart.length === 0) { box.innerHTML = '<p class="text-center text-slate-300 text-xs">Cart is empty</p>'; return; }
-            box.innerHTML = cart.map((c,i)=>`
-                <div class="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
-                    <div><p class="font-bold">${c.name}</p><p class="text-[10px] text-slate-400">${c.qty} units x ₹${c.rate}</p></div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold">₹${c.total}</span>
-                        <button onclick="cart.splice(${i},1);updateCart()" class="text-rose-500"><i class="fas fa-times"></i></button>
-                    </div>
+        function updateCartUI() {
+            const list = document.getElementById('cart-list');
+            if(!list) return;
+            list.innerHTML = cart.map((c,i)=>`
+                <div class="flex justify-between py-2 text-sm">
+                    <span>${c.name} x ${c.qty}</span>
+                    <div class="flex gap-3"><b>₹${c.total}</b><button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-500">×</button></div>
                 </div>
             `).join('');
-            document.getElementById('total-val').innerText = `₹${cart.reduce((a,b)=>a+b.total,0).toFixed(2)}`;
+            document.getElementById('total-val').innerText = `₹${cart.reduce((a,b)=>a+b.total,0)}`;
         }
 
-        function doSale() {
-            if(!cart.length) return alert("Add items first");
+        function confirmSale() {
+            if(!cart.length) return;
             const bill = {
                 id: Date.now(),
-                date: document.getElementById('sDate').value,
-                name: document.getElementById('cName').value || "Guest",
-                mobile: document.getElementById('cMob').value || "N/A",
-                address: document.getElementById('cAddr').value || "N/A",
-                items: [...cart],
+                name: document.getElementById('cN').value || "Guest",
+                mobile: document.getElementById('cM').value || "N/A",
+                date: document.getElementById('sD').value,
+                payment: document.getElementById('sP').value,
                 total: cart.reduce((a,b)=>a+b.total,0),
-                payment: document.getElementById('sPay').value
+                items: [...cart]
             };
             sales.push(bill);
             cart.forEach(c => { let m = inventory.find(i=>i.id==c.id); if(m) m.qty -= c.qty; });
-            cart = []; save(); renderDashboard();
+            cart = []; save(); renderSales();
         }
 
-        // --- HISTORY & SEARCH & EDIT ---
-        function renderHistory() {
-            document.getElementById('sale-area').innerHTML = `
-                <div class="relative mb-4">
-                    <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
-                    <input oninput="searchHistory(this.value)" value="${searchQuery}" placeholder="Search customer name..." class="w-full bg-white p-4 pl-12 rounded-2xl text-sm border-none shadow-sm outline-none">
-                </div>
-                <div id="history-list" class="space-y-3"></div>
+        function renderSalesHistory() {
+            document.getElementById('sales-body').innerHTML = `
+                <input oninput="searchS(this.value)" placeholder="Search by name..." class="w-full bg-white p-3 rounded-xl mb-4 shadow-sm border-none outline-none">
+                <div id="h-list" class="space-y-3"></div>
             `;
-            showFilteredHistory();
+            searchS('');
         }
 
-        function searchHistory(val) { searchQuery = val; showFilteredHistory(); }
-
-        function showFilteredHistory() {
-            const list = document.getElementById('history-list');
-            const filtered = sales.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
-            list.innerHTML = filtered.slice().reverse().map(s => `
+        function searchS(query) {
+            const filtered = sales.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+            document.getElementById('h-list').innerHTML = filtered.slice().reverse().map(s => `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-2 uppercase">
-                        <span>${s.date}</span><span>${s.payment}</span>
-                    </div>
-                    <h4 class="font-bold text-slate-800">${s.name}</h4>
-                    <p class="text-[10px] text-slate-400 truncate">${s.items.map(i=>i.name).join(', ')}</p>
-                    <div class="mt-4 pt-3 border-t flex justify-between items-center">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-bold mb-1"><span>${s.date}</span><span>${s.payment}</span></div>
+                    <h4 class="font-bold text-sm">${s.name}</h4>
+                    <div class="flex justify-between items-center mt-3 pt-2 border-t">
                         <span class="font-black text-emerald-800">₹${s.total}</span>
                         <div class="flex gap-4">
-                            <button onclick="editSale(${s.id})" class="text-blue-500 text-sm"><i class="fas fa-edit"></i></button>
-                            <button onclick="delSale(${s.id})" class="text-rose-400 text-sm"><i class="fas fa-trash"></i></button>
+                            <button onclick="editSale(${s.id})" class="text-blue-500"><i class="fas fa-edit"></i></button>
+                            <button onclick="delSale(${s.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-slate-400 py-10">No matches.</p>';
+            `).join('');
         }
 
         function editSale(id) {
-            const s = sales.find(i=>i.id===id);
-            const nName = prompt("Edit Customer Name:", s.name);
-            const nDate = prompt("Edit Date (YYYY-MM-DD):", s.date);
-            const nTotal = prompt("Edit Bill Total Amount:", s.total);
-            if(nName !== null) { s.name = nName; s.date = nDate; s.total = parseFloat(nTotal); save(); renderSales(); }
+            const s = sales.find(i=>i.id === id);
+            const nName = prompt("Edit Name:", s.name);
+            const nTotal = prompt("Edit Total Amount:", s.total);
+            if(nName !== null) { s.name = nName; s.total = parseFloat(nTotal); save(); renderSales(); }
         }
 
-        function delSale(id) { if(confirm("Delete record?")) { sales = sales.filter(s=>s.id!==id); save(); renderSales(); } }
+        function delSale(id) { if(confirm("Delete?")) { sales = sales.filter(i=>i.id!==id); save(); renderSales(); } }
 
         // --- CUSTOMERS ---
         function renderCustomers() {
@@ -310,22 +246,52 @@
             const unique = [];
             sales.forEach(s => { if(!unique.find(u=>u.mobile === s.mobile)) unique.push(s); });
             document.getElementById('main-content').innerHTML = `
-                <h2 class="text-xl font-bold mb-4">Customer Directory</h2>
+                <h2 class="font-bold text-xl mb-4">Users</h2>
                 <div class="space-y-3">
                     ${unique.map(c => `
-                        <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-50">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-emerald-50 text-emerald-800 w-10 h-10 rounded-full flex items-center justify-center font-bold">C</div>
-                                <div><p class="font-bold text-sm text-slate-800">${c.name}</p><p class="text-[10px] text-slate-400">${c.mobile}</p></div>
-                            </div>
-                            <button onclick="custHistory('${c.mobile}')" class="bg-slate-50 p-2 rounded-lg text-emerald-600"><i class="fas fa-history"></i></button>
+                        <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                            <div><p class="font-bold">${c.name}</p><p class="text-[10px] text-slate-400">${c.mobile}</p></div>
+                            <div class="bg-emerald-50 text-emerald-700 font-bold p-2 rounded-lg text-xs">Verified</div>
                         </div>
-                    `).join('') || '<p class="text-center text-slate-400 py-10">No users.</p>'}
+                    `).join('') || '<p class="text-center py-10 text-slate-400">No customers yet</p>'}
                 </div>
             `;
         }
 
-        function custHistory(mob) {
-            const h = sales.filter(s => s.mobile === mob);
+        // --- REPORTS ---
+        function renderReports() {
+            setNav('nav-rep');
+            const totalS = sales.reduce((a,b)=>a+b.total,0);
+            const totalE = expenses.reduce((a,b)=>a+b.amt,0);
             document.getElementById('main-content').innerHTML = `
-                <button onclick="renderCustomers()" class="text-emerald-700 font-bold text-sm mb-4"><i cla
+                <div class="bg-white p-6 rounded-3xl shadow-sm mb-4">
+                    <p class="text-xs font-bold text-slate-400 mb-1">Net Profit</p>
+                    <h2 class="text-3xl font-black text-emerald-800">₹${totalS - totalE}</h2>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm mb-4">
+                    <h4 class="text-xs font-bold mb-3 uppercase text-slate-400">Add Expense</h4>
+                    <div class="flex gap-2">
+                        <input id="eN" placeholder="Reason" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
+                        <input id="eA" type="number" placeholder="Amt" class="w-20 bg-slate-50 p-3 rounded-xl text-sm">
+                        <button onclick="addExp()" class="bg-rose-500 text-white px-4 rounded-xl">-</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    ${expenses.map(e => `<div class="bg-white p-3 rounded-xl flex justify-between text-sm"><span>${e.name}</span><b class="text-rose-500">-₹${e.amt}</b></div>`).join('')}
+                </div>
+            `;
+        }
+
+        function addExp() {
+            const n = document.getElementById('eN').value;
+            const a = parseFloat(document.getElementById('eA').value);
+            if(n && a) { expenses.push({ name: n, amt: a }); save(); renderReports(); }
+        }
+
+        // --- BOOTSTRAP APP ---
+        window.onload = () => {
+            renderDashboard(); // This ensures something is drawn immediately
+        };
+    </script>
+</body>
+</html>
