@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // Data Initialization
         let inventory = JSON.parse(localStorage.getItem('pharma_v3_inv')) || [];
         let sales = JSON.parse(localStorage.getItem('pharma_v3_sales')) || [];
         let expenses = JSON.parse(localStorage.getItem('pharma_v3_exp')) || [];
@@ -78,104 +77,111 @@
                         <i class="fas fa-bell"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-orange-800 text-sm">Stock khatam hone wala hai!</h4>
-                        <p class="text-xs text-orange-700">${lowStockCount} medicines low stock. Check inventory.</p>
+                        <h4 class="font-bold text-orange-800 text-sm">Stock Alert</h4>
+                        <p class="text-xs text-orange-700">${lowStockCount} medicines low stock.</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                        <div class="bg-emerald-50 text-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-pills"></i></div>
                         <p class="text-3xl font-bold">${inventory.length}</p>
-                        <p class="text-xs text-slate-400 font-medium uppercase tracking-tight">Total Medicines</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total Items</p>
                     </div>
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                        <div class="bg-orange-50 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-triangle-exclamation"></i></div>
-                        <p class="text-3xl font-bold text-orange-600">${lowStockCount}</p>
-                        <p class="text-xs text-slate-400 font-medium uppercase tracking-tight">Low Stock</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                        <div class="bg-rose-50 text-rose-600 w-8 h-8 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-calendar-xmark"></i></div>
-                        <p class="text-3xl font-bold">0</p>
-                        <p class="text-xs text-slate-400 font-medium uppercase tracking-tight">Short Expiry</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                        <div class="bg-blue-50 text-blue-600 w-8 h-8 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-indian-rupee-sign"></i></div>
-                        <p class="text-3xl font-bold">₹${tSales}</p>
-                        <p class="text-xs text-slate-400 font-medium uppercase tracking-tight">Today's Sales</p>
+                        <p class="text-3xl font-bold text-blue-600">₹${tSales}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Today's Sale</p>
                     </div>
                 </div>
                 
-                <h3 class="font-bold text-slate-600 mt-4">Low Stock Medicines</h3>
+                <h3 class="font-bold text-slate-600 mt-4">Inventory Status</h3>
                 <div class="space-y-2">
-                    ${inventory.filter(m => m.qty < 10).slice(0, 5).map(m => `
-                        <div class="bg-white p-3 rounded-xl flex items-center justify-between border border-slate-50">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-orange-50 text-orange-500 p-2 rounded-lg text-xs"><i class="fas fa-capsules"></i></div>
-                                <div><p class="font-bold text-sm">${m.name}</p><p class="text-[10px] text-slate-400">₹${m.rate} per unit</p></div>
-                            </div>
-                            <div class="text-right">
-                                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] font-bold">Low Stock</span>
-                                <p class="text-xs font-bold text-orange-600 mt-1">Qty: ${m.qty}</p>
-                            </div>
+                    ${inventory.slice(0, 5).map(m => `
+                        <div class="bg-white p-3 rounded-xl flex justify-between border border-slate-50">
+                            <div><p class="font-bold text-sm">${m.name}</p><p class="text-[10px] text-slate-400">Stock: ${m.qty}</p></div>
+                            <p class="font-bold text-emerald-700">₹${m.rate}</p>
                         </div>
                     `).join('')}
                 </div>
             `;
         }
 
-        // --- SALES ENTRY (AS PER IMAGE) ---
+        // --- INVENTORY (NEWLY ADDED) ---
+        function renderInventory() {
+            setNav('nav-inv');
+            document.getElementById('main-content').innerHTML = `
+                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-3">
+                    <h3 class="font-bold">Add New Medicine</h3>
+                    <input id="invName" placeholder="Medicine Name" class="w-full bg-slate-50 p-3 rounded-xl text-sm">
+                    <div class="flex gap-2">
+                        <input id="invQty" type="number" placeholder="Qty" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
+                        <input id="invRate" type="number" placeholder="Rate" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
+                    </div>
+                    <button onclick="addMedicine()" class="w-full bg-emerald-800 text-white p-3 rounded-xl font-bold">Add to Stock</button>
+                </div>
+
+                <div class="space-y-2 mt-4">
+                    <h3 class="font-bold px-1">All Medicines</h3>
+                    ${inventory.map(m => `
+                        <div class="bg-white p-3 rounded-xl flex justify-between items-center shadow-sm">
+                            <div>
+                                <p class="font-bold text-sm">${m.name}</p>
+                                <p class="text-xs text-slate-500">Stock: ${m.qty} | Rate: ₹${m.rate}</p>
+                            </div>
+                            <button onclick="deleteMed(${m.id})" class="text-rose-400 p-2"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function addMedicine() {
+            const name = document.getElementById('invName').value;
+            const qty = parseInt(document.getElementById('invQty').value);
+            const rate = parseFloat(document.getElementById('invRate').value);
+            if(!name || !qty || !rate) return alert("Fill all details");
+            
+            inventory.push({ id: Date.now(), name, qty, rate });
+            save();
+            renderInventory();
+        }
+
+        function deleteMed(id) {
+            inventory = inventory.filter(m => m.id !== id);
+            save();
+            renderInventory();
+        }
+
+        // --- SALES ---
         let cart = [];
         function renderSales() {
             setNav('nav-sales');
             document.getElementById('main-content').innerHTML = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">
-                    <h3 class="font-bold flex items-center gap-2"><i class="fas fa-user-circle text-emerald-800"></i> Customer Information</h3>
-                    <input id="cName" placeholder="Customer Name (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <input id="cMob" placeholder="Mobile Number (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <input id="cAddr" placeholder="Address (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <div class="grid grid-cols-2 gap-3">
-                         <div class="bg-slate-50 p-3 rounded-xl">
-                            <p class="text-[10px] text-slate-400 uppercase">Sale Date</p>
-                            <p class="font-bold text-sm">${new Date().toLocaleDateString()}</p>
-                         </div>
-                         <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
-                            <p class="text-[10px] text-slate-400 uppercase mr-2">Pay Mode</p>
-                            <select id="payMode" class="bg-transparent font-bold text-sm outline-none">
-                                <option value="Cash">Cash</option>
-                                <option value="Online">Online</option>
-                            </select>
-                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
-                    <h3 class="font-bold flex items-center gap-2 mb-4"><i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart</h3>
-                    <div class="flex gap-2 mb-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
+                    <h3 class="font-bold">New Sale</h3>
+                    <input id="cName" placeholder="Customer Name" class="w-full bg-slate-50 p-3 rounded-xl text-sm">
+                    <div class="flex gap-2">
                         <select id="medSelect" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
                             <option value="">Select medicine</option>
-                            ${inventory.map(m => `<option value="${m.id}">${m.name} (Qty: ${m.qty})</option>`).join('')}
+                            ${inventory.map(m => `<option value="${m.id}">${m.name} (${m.qty})</option>`).join('')}
                         </select>
                         <input id="medQty" type="number" placeholder="Qty" class="w-20 bg-slate-50 p-3 rounded-xl text-sm">
                         <button onclick="addToCart()" class="bg-emerald-800 text-white px-4 rounded-xl"><i class="fas fa-plus"></i></button>
                     </div>
-                    <div id="cartItems" class="space-y-3 py-4 text-center text-slate-400 text-sm">Cart is empty</div>
-                    <div class="bg-emerald-50 p-4 rounded-xl flex justify-between items-center mt-4">
-                        <span class="font-bold text-emerald-900">Total Bill Amount</span>
-                        <span class="text-xl font-black text-emerald-800" id="totalAmt">₹0.00</span>
+                    <div id="cartItems" class="space-y-2 border-t pt-3 min-h-[50px]">Cart is empty</div>
+                    <div class="flex justify-between font-bold text-lg pt-2 border-t">
+                        <span>Total:</span><span id="totalAmt">₹0.00</span>
                     </div>
-                    <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
-                        <i class="fas fa-check-circle"></i> Confirm Sale
-                    </button>
+                    <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-xl font-bold shadow-lg">Confirm & Save</button>
                 </div>
             `;
+            updateCartUI();
         }
 
         function addToCart() {
             const mid = document.getElementById('medSelect').value;
             const qty = parseInt(document.getElementById('medQty').value);
             const med = inventory.find(m => m.id == mid);
-            if(!med || !qty) return;
+            if(!med || !qty || qty > med.qty) return alert("Invalid Qty or Out of Stock");
             
             cart.push({ id: med.id, name: med.name, qty: qty, rate: med.rate, total: med.rate * qty });
             updateCartUI();
@@ -184,97 +190,81 @@
         function updateCartUI() {
             const container = document.getElementById('cartItems');
             if(cart.length === 0) { container.innerHTML = "Cart is empty"; return; }
-            
             container.innerHTML = cart.map((item, i) => `
-                <div class="flex justify-between items-center text-slate-700 bg-slate-50 p-2 rounded-lg">
-                    <div class="text-left"><p class="font-bold">${item.name}</p><p class="text-xs">${item.qty} x ₹${item.rate}</p></div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold">₹${item.total}</span>
-                        <button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-500"><i class="fas fa-times"></i></button>
-                    </div>
+                <div class="flex justify-between text-sm">
+                    <span>${item.name} (x${item.qty})</span>
+                    <b>₹${item.total}</b>
                 </div>
             `).join('');
-            
             const total = cart.reduce((a,b) => a + b.total, 0);
             document.getElementById('totalAmt').innerText = `₹${total.toFixed(2)}`;
         }
 
         function confirmSale() {
-            if(cart.length === 0) return alert("Add items to cart first");
-            const newSale = {
+            if(cart.length === 0) return;
+            const sale = {
                 id: Date.now(),
                 date: new Date().toISOString().split('T')[0],
-                name: document.getElementById('cName').value || "Walk-in Customer",
-                mobile: document.getElementById('cMob').value || "N/A",
-                address: document.getElementById('cAddr').value || "N/A",
-                items: [...cart],
+                customer: document.getElementById('cName').value || "Walk-in",
                 total: cart.reduce((a,b) => a + b.total, 0),
-                payment: document.getElementById('payMode').value
+                items: [...cart],
+                payment: "Cash"
             };
-            
-            sales.push(newSale);
+            sales.push(sale);
             cart.forEach(item => {
                 let med = inventory.find(m => m.id === item.id);
                 if(med) med.qty -= item.qty;
             });
-            
             cart = [];
             save();
             renderDashboard();
         }
 
-        // --- REPORTS WITH EXPENSE DEDUCTION ---
+        // --- CUSTOMERS (NEWLY ADDED) ---
+        function renderCustomers() {
+            setNav('nav-cust');
+            // Extract unique customers from sales
+            const uniqueCust = [...new Set(sales.map(s => s.customer))];
+            document.getElementById('main-content').innerHTML = `
+                <h3 class="font-bold px-1">Recent Customers</h3>
+                <div class="space-y-2">
+                    ${uniqueCust.length ? uniqueCust.map(c => `
+                        <div class="bg-white p-4 rounded-2xl flex items-center gap-3 shadow-sm border border-slate-50">
+                            <div class="bg-emerald-100 text-emerald-700 w-10 h-10 rounded-full flex items-center justify-center font-bold">
+                                ${c[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm">${c}</p>
+                                <p class="text-[10px] text-slate-400">Regular Customer</p>
+                            </div>
+                        </div>
+                    `).join('') : '<p class="text-center text-slate-400 py-10">No customer records found</p>'}
+                </div>
+            `;
+        }
+
+        // --- REPORTS ---
         function renderReports() {
             setNav('nav-rep');
-            const totals = sales.reduce((acc, s) => {
-                const d = s.date;
-                if(!acc[d]) acc[d] = { cash: 0, online: 0, total: 0 };
-                if(s.payment === 'Cash') acc[d].cash += s.total; else acc[d].online += s.total;
-                acc[d].total += s.total;
-                return acc;
-            }, {});
-
+            const totalSalesAmt = sales.reduce((a, b) => a + b.total, 0);
+            const totalExpAmt = expenses.reduce((a, b) => a + b.amt, 0);
+            
             document.getElementById('main-content').innerHTML = `
-                <div class="bg-white p-4 rounded-2xl shadow-sm space-y-4">
-                    <h3 class="font-bold">Add Expense (Salary/Rent)</h3>
+                <div class="bg-white p-5 rounded-2xl shadow-sm mb-4">
+                    <h3 class="font-bold mb-4">Financial Summary</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between"><span>Total Revenue:</span><span class="text-emerald-600 font-bold">₹${totalSalesAmt}</span></div>
+                        <div class="flex justify-between"><span>Total Expenses:</span><span class="text-rose-600 font-bold">₹${totalExpAmt}</span></div>
+                        <div class="flex justify-between border-t pt-2 font-black text-lg"><span>Net Profit:</span><span>₹${totalSalesAmt - totalExpAmt}</span></div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-2xl shadow-sm">
+                    <h3 class="font-bold mb-2">Add Expense</h3>
                     <div class="flex gap-2">
-                        <input id="expName" placeholder="Expense Name" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
+                        <input id="expName" placeholder="Rent/Light bill" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm">
                         <input id="expAmt" type="number" placeholder="Amt" class="w-24 bg-slate-50 p-3 rounded-xl text-sm">
-                        <button onclick="addExpense()" class="bg-rose-600 text-white px-4 rounded-xl"><i class="fas fa-minus"></i></button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-50">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-bold">
-                            <tr>
-                                <th class="p-3">Date</th>
-                                <th class="p-3 text-right">Cash</th>
-                                <th class="p-3 text-right">Online</th>
-                                <th class="p-3 text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Object.keys(totals).reverse().map(d => `
-                                <tr class="border-t border-slate-50">
-                                    <td class="p-3 font-medium">${d}</td>
-                                    <td class="p-3 text-right text-emerald-600">₹${totals[d].cash}</td>
-                                    <td class="p-3 text-right text-blue-600">₹${totals[d].online}</td>
-                                    <td class="p-3 text-right font-bold">₹${totals[d].total}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                    <h4 class="font-bold text-rose-800 text-sm mb-2">Total Monthly Expenses</h4>
-                    <div class="space-y-1">
-                        ${expenses.map(e => `<div class="flex justify-between text-xs"><span>${e.name}</span><b>-₹${e.amt}</b></div>`).join('')}
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-rose-200 flex justify-between font-bold">
-                        <span>Net Balance</span>
-                        <span>₹${(sales.reduce((a,b)=>a+b.total,0) - expenses.reduce((a,b)=>a+b.amt,0)).toFixed(2)}</span>
+                        <button onclick="addExpense()" class="bg-rose-600 text-white px-4 rounded-xl"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>
             `;
@@ -284,20 +274,19 @@
             const name = document.getElementById('expName').value;
             const amt = parseFloat(document.getElementById('expAmt').value);
             if(!name || !amt) return;
-            expenses.push({ name, amt, date: new Date().toISOString().split('T')[0] });
+            expenses.push({ name, amt, date: new Date().toISOString() });
             save();
             renderReports();
         }
 
-        // Dummy Initial Data
+        // Initialize App
         if(inventory.length === 0) {
             inventory = [
-                {id: 1, name: 'Paracetamol 500mg', composition: 'Acetaminophen', qty: 120, rate: 2.50, expiry: '2028-06-30'},
-                {id: 2, name: 'Amoxicillin 250mg', composition: 'Amoxicillin', qty: 7, rate: 8.00, expiry: '2027-09-15'}
+                {id: 1, name: 'Paracetamol 500mg', qty: 120, rate: 2.50},
+                {id: 2, name: 'Amoxicillin 250mg', qty: 7, rate: 8.00}
             ];
             save();
         }
-
         renderDashboard();
     </script>
 </body>
