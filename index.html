@@ -464,14 +464,12 @@ function deleteMed(id) {
                 <input id="invSearch" oninput="runFilter()" placeholder="Search medicine..." class="w-full pl-11 p-4 bg-white rounded-2xl shadow-sm text-sm outline-none border border-slate-100">
             </div>
                     <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-            <button onclick="runFilter('all')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-emerald-800 text-white">All</button>
-            
-            <button onclick="runFilter('instock')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white text-emerald-700 border border-emerald-100 italic">In Stock</button>
-            
-            <button onclick="runFilter('low')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Low Stock</button>
-            <button onclick="runFilter('short')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Short Exp</button>
-            <button onclick="runFilter('expired')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold bg-white">Expired</button>
-        </div>
+                <button onclick="runFilter('all')" class="filter-btn active-f whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-emerald-800 text-white">All</button>
+                <button onclick="runFilter('instock')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">In Stock</button>
+                <button onclick="runFilter('low')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-yellow-600 border border-yellow-200">Low Stock</button>
+                <button onclick="runFilter('short')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-orange-600 border border-orange-200">Short Exp</button>
+                <button onclick="runFilter('expired')" class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-rose-600 border border-rose-200">Expired</button>
+            </div>
         
         </div>
         <div id="inv-list" class="space-y-3 mt-2"></div>
