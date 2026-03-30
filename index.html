@@ -127,62 +127,62 @@
         // --- SALES ENTRY (AS PER IMAGE) ---
         let cart = [];
         function renderSales() {
-            setNav('nav-sales');
-            document.getElementById('main-content').innerHTML = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">
-                    <h3 class="font-bold flex items-center gap-2"><i class="fas fa-user-circle text-emerald-800"></i> Customer Information</h3>
-                    <input id="cName" placeholder="Customer Name (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <input id="cMob" placeholder="Mobile Number (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <input id="cAddr" placeholder="Address (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm focus:ring-2 ring-emerald-500">
-                    <div class="grid grid-cols-2 gap-3">
-                         <div class="bg-slate-50 p-3 rounded-xl">
-                            <p class="text-[10px] text-slate-400 uppercase">Sale Date</p>
-                            <div>
-    <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Sale Date</p>
-    <input id="saleDate" type="date" value="${new Date().toISOString().split('T')[0]}" class="bg-transparent font-bold text-sm outline-none border-b border-slate-200 focus:border-emerald-500">
-</div>
+    setNav('nav-sales');
+    document.getElementById('main-content').innerHTML = `
+        <div class="flex border-b border-slate-200 mb-4 bg-white rounded-t-2xl">
+            <button onclick="renderSales()" class="flex-1 py-3 text-sm font-bold border-b-2 border-emerald-800 text-emerald-800">New Sale</button>
+            <button onclick="renderSalesHistory()" class="flex-1 py-3 text-sm font-bold text-slate-400">Sales History</button>
+        </div>
 
-                         </div>
-                         <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
-                            <p class="text-[10px] text-slate-400 uppercase mr-2">Pay Mode</p>
-                            <select id="payMode" class="bg-transparent font-bold text-sm outline-none">
-                                <option value="Cash">Cash</option>
-                                <option value="Online">Online</option>
-                            </select>
-                         </div>
+        <div id="sale-entry-view" class="space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">
+                <h3 class="font-bold flex items-center gap-2"><i class="fas fa-user-circle text-emerald-800"></i> Customer Info</h3>
+                <input id="cName" placeholder="Customer Name" class="w-full bg-slate-50 p-4 rounded-xl text-sm outline-none">
+                <input id="cMob" type="number" placeholder="Mobile Number" class="w-full bg-slate-50 p-4 rounded-xl text-sm outline-none">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-xl">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Sale Date</p>
+                        <input id="saleDate" type="date" value="${new Date().toISOString().split('T')[0]}" class="bg-transparent font-bold text-sm outline-none w-full">
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Payment Mode</p>
+                        <select id="payMode" class="bg-transparent font-bold text-sm outline-none w-full">
+                            <option value="Cash">Cash</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
+                <h3 class="font-bold flex items-center gap-2 mb-4"><i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart</h3>
+                <div class="flex gap-2 mb-4">
+                    <select id="medSelect" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm outline-none ring-1 ring-slate-100">
+                        <option value="">Select medicine</option>
+                        ${inventory.map(m => `<option value="${m.id}">${m.name} (Stock: ${m.qty})</option>`).join('')}
+                    </select>
+                    <input id="medQty" type="number" placeholder="Qty" class="w-20 bg-slate-50 p-3 rounded-xl text-sm outline-none ring-1 ring-slate-100">
+                    <button onclick="addToCart()" class="bg-emerald-800 text-white px-5 rounded-xl"><i class="fas fa-plus"></i></button>
+                </div>
+
+                <div id="cartItems" class="space-y-3 py-4 border-t border-slate-50 min-h-[100px]">
+                    <div class="text-center py-6">
+                        <i class="fas fa-shopping-cart text-slate-200 text-3xl mb-2"></i>
+                        <p class="text-slate-400 text-xs italic">Cart is empty. Select medicine above.</p>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
-                    <h3 class="font-bold flex items-center gap-2 mb-4"><i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart</h3>
-                    
-                    <div class="flex gap-2 mb-4">
-    <select id="medSelect" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm border-none outline-none focus:ring-1 ring-emerald-500">
-        <option value="">Select medicine</option>
-        ${inventory.map(m => `<option value="${m.id}">${m.name} (Stock: ${m.qty})</option>`).join('')}
-    </select>
-    <input id="medQty" type="number" placeholder="Qty" class="w-20 bg-slate-50 p-3 rounded-xl text-sm border-none outline-none focus:ring-1 ring-emerald-500">
-    <button onclick="addToCart()" class="bg-emerald-800 text-white px-5 rounded-xl hover:bg-emerald-900 transition-colors">
-        <i class="fas fa-plus"></i>
-    
-    <div id="cartItems" class="space-y-3 py-4 border-t border-slate-100 min-h-[50px]">
-        <p class="text-center text-slate-400 text-xs italic">No items added yet</p>
-    </div>
-    <div class="bg-emerald-50 p-4 rounded-xl flex justify-between items-center mt-4">
-        <span class="font-bold text-emerald-900">Total Bill Amount</span>
-        <span class="text-xl font-black text-emerald-800" id="totalAmt">₹0.00</span>
-    </div>
-    <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
-        <i class="fas fa-check-circle"></i> Confirm Sale
-    </button>
-</div>
-
-<div id="cartItems" class="space-y-3 py-4 border-t border-slate-100 min-h-[50px]">
-    <p class="text-center text-slate-400 text-xs italic">No items added yet</p>
-</div>
-
+                <div class="bg-emerald-50 p-4 rounded-xl flex justify-between items-center mt-4">
+                    <span class="font-bold text-emerald-900">Total Bill Amount</span>
+                    <span class="text-xl font-black text-emerald-800" id="totalAmt">₹0.00</span>
                 </div>
-            `;
+                <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
+                    <i class="fas fa-check-circle"></i> Confirm Sale
+                </button>
+            </div>
+        </div>
+    `;
+    cart = []; // Reset cart on fresh render
         }
 
         function addToCart() {
