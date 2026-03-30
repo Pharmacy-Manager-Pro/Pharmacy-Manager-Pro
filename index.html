@@ -185,46 +185,72 @@
     cart = []; // Reset cart on fresh render
         }
 
-        function addToCart() {
-            const mid = document.getElementById('medSelect').value;
-            const qty = parseInt(document.getElementById('medQty').value);
-            const med = inventory.find(m => m.id == mid);
-            if(!med || !qty) return;
-            
-            cart.push({ id: med.id, name: med.name, qty: qty, rate: med.rate, total: med.rate * qty });
-            updateCartUI();
-        }
-        
-          function updateCartUI() {
-            const container = document.getElementById('cartItems');
-            if(cart.length === 0) { container.innerHTML = "Cart is empty"; return; }
-            
-            container.innerHTML = cart.map((item, i) => `
-                <div class="flex justify-between items-center text-slate-700 bg-slate-50 p-2 rounded-lg">
-                    <div class="text-left"><p class="font-bold">${item.name}</p><p class="text-xs">${item.qty} x ₹${item.rate}</p></div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold">₹${item.total}</span>
-                        <button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-500"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            
-            const total = cart.reduce((a,b) => a + b.total, 0);
-            document.getElementById('totalAmt').innerText = `₹${total.toFixed(2)}`;
-          }  
+function addToCart() {
+    const mid = document.getElementById('medSelect').value;
+    const qty = parseInt(document.getElementById('medQty').value);
+    const med = inventory.find(m => m.id == mid);
 
-           function confirmSale() {
-            if(cart.length === 0) return alert("Add items to cart first");
-            const newSale = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                name: document.getElementById('cName').value || "Walk-in Customer",
-                mobile: document.getElementById('cMob').value || "N/A",
-                address: document.getElementById('cAddr').value || "N/A",
-                items: [...cart],
-                total: cart.reduce((a,b) => a + b.total, 0),
-                payment: document.getElementById('payMode').value
-            };
+    if(!med || !qty || qty <= 0) return alert("Select medicine and qty");
+    if(qty > med.qty) return alert("Stock is low!");
+
+    const existing = cart.find(item => item.id == mid);
+    if(existing) {
+        existing.qty += qty;
+        existing.total = existing.qty * existing.rate;
+    } else {
+        cart.push({ id: med.id, name: med.name, qty, rate: med.rate, total: med.rate * qty });
+    }
+    document.getElementById('medQty').value = "";
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const container = document.getElementById('cartItems');
+    if(cart.length === 0) { 
+        container.innerHTML = '<p class="text-center text-slate-400 text-xs italic py-6">Cart is empty</p>'; 
+        document.getElementById('totalAmt').innerText = "₹0.00";
+        return; 
+    }
+    
+    container.innerHTML = cart.map((item, i) => `
+        <div class="flex justify-between items-center text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div><p class="font-bold text-sm">${item.name}</p><p class="text-[10px] text-slate-400">${item.qty} x ₹${item.rate}</p></div>
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-sm text-emerald-800">₹${item.total.toFixed(2)}</span>
+                <button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-500"><i class="fas fa-times-circle"></i></button>
+            </div>
+        </div>
+    `).join('');
+    
+    const total = cart.reduce((a,b) => a + b.total, 0);
+    document.getElementById('totalAmt').innerText = `₹${total.toFixed(2)}`;
+}
+
+function confirmSale() {
+    if(cart.length === 0) return alert("Cart is empty!");
+    
+    const newSale = {
+        id: Date.now(),
+        date: document.getElementById('saleDate').value,
+        name: document.getElementById('cName').value || "Walk-in Customer",
+        mobile: document.getElementById('cMob').value || "N/A",
+        items: [...cart],
+        total: cart.reduce((a,b) => a + b.total, 0),
+        payment: document.getElementById('payMode').value
+    };
+
+    sales.push(newSale);
+    cart.forEach(item => {
+        let med = inventory.find(m => m.id === item.id);
+        if(med) med.qty -= item.qty;
+    });
+    
+    cart = [];
+    save();
+    alert("Sale Successful!");
+    renderSalesHistory(); // Direct history par bhejein
+}
+        
         
             function renderInventory() {
     setNav('nav-inv');
