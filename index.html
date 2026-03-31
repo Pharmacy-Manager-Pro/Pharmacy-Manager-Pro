@@ -32,10 +32,10 @@
         </button>  
         <button onclick="renderInventory()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-inv">  
             <i class="fas fa-box-archive"></i><span class="text-[10px] font-medium">Inventory</span>  
-        </button>  
-        <button onclick="renderSales()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-sales">  
-            <i class="fas fa-cash-register"></i><span class="text-[10px] font-medium">Sales</span>  
-        </button>  
+        </button> 
+        <button onclick="renderSalesMain()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-sales">  
+           <i class="fas fa-cash-register"></i><span class="text-[10px] font-medium">Sales</span>  
+        </button>   
         <button onclick="renderCustomers()" class="nav-btn flex flex-col items-center gap-1 text-slate-400" id="nav-cust">  
             <i class="fas fa-users"></i><span class="text-[10px] font-medium">Customers</span>  
         </button>  
@@ -50,7 +50,6 @@
     let inventory = JSON.parse(localStorage.getItem('pharma_v3_inv')) || [];  
     let sales = JSON.parse(localStorage.getItem('pharma_v3_sales')) || [];  
     let expenses = JSON.parse(localStorage.getItem('pharma_v3_exp')) || [];  
-      
     const save = () => {  
         localStorage.setItem('pharma_v3_inv', JSON.stringify(inventory));  
         localStorage.setItem('pharma_v3_sales', JSON.stringify(sales));  
@@ -121,9 +120,38 @@
         `;  
     }  
 
+     function updateDashboard() {
+    const today = new Date().toISOString().split('T')[0];
+    const todaySales = sales.filter(s => s.date === today).reduce((a, b) => a + b.total, 0);
+    const lowStockCount = inventory.filter(m => m.qty < 10).length;
+
+    // Is block ko search karein aur replace karein:
+    // Today's Sales Card update
+    document.getElementById('dash-today-sales').innerText = `₹${todaySales}`; 
+    // Low Stock count card
+    document.getElementById('dash-low-stock').innerText = lowStockCount;
+    // Total Medicines count
+    document.getElementById('dash-total-pills').innerText = inventory.length;
+
+    // Low Stock List (top 5) refresh karein
+    const listCont = document.getElementById('dash-low-stock-list');
+    listCont.innerHTML = inventory.filter(m => m.qty < 10).slice(0, 5).map(m => `
+        <div class="bg-white p-3 rounded-xl flex items-center justify-between border border-slate-50">  
+            <div class="flex items-center gap-3">  
+                <div class="bg-orange-50 text-orange-500 p-2 rounded-lg text-xs"><i class="fas fa-capsules"></i></div>  
+                <div><p class="font-bold text-sm">${m.name}</p><p class="text-[10px] text-slate-400">₹${m.rate} per unit</p></div>  
+            </div>  
+            <div class="text-right">  
+                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] font-bold">Low Stock</span>  
+                <p class="text-xs font-bold text-orange-600 mt-1">Qty: ${m.qty}</p>  
+            </div>  
+        </div>  
+    `).join('');
+}
+
     // --- SALES ENTRY (AS PER IMAGE) ---  
     let cart = [];  
-    function renderSales() {
+    function renderNewSale() {
     setNav('nav-sales');
     // Important: Cart initial clean-up jab page load ho
     cart = []; 
@@ -180,6 +208,223 @@
     updateCartUI();
 }
 
+    function renderSalesMain() {
+    setNav('nav-sales');
+    document.getElementById('main-content').innerHTML = `
+        <h2 class="font-bold text-lg mb-1">Sales</h2>
+        <p class="text-xs text-slate-400 mb-6">Sales History & New Sale</p>
+
+        <div class="flex gap-1 border-b border-slate-100 mb-6 pb-2">
+            <button id="tab-history" onclick="showSalesSubTab('history')" class="flex-1 text-center py-2 px-1 text-emerald-800 font-bold border-b-2 border-emerald-800 text-xs">Sales History</button>
+            <button id="tab-new" onclick="showSalesSubTab('new')" class="flex-1 text-center py-2 px-1 text-slate-400 font-medium border-b-2 border-transparent text-xs hover:text-emerald-700">New Sale</button>
+        </div>
+
+        <div id="sales-history-container" class="space-y-4"></div>
+        <div id="new-sale-container" class="space-y-4" style="display: none;"></div>
+    `;
+    renderSalesHistory(); // Default history load karein
+}
+
+function showSalesSubTab(tabName) {
+    const historyCont = document.getElementById('sales-history-container');
+    const newCont = document.getElementById('new-sale-container');
+    const tabHistory = document.getElementById('tab-history');
+    const tabNew = document.getElementById('tab-new');
+
+    // UI Tab State Management
+    tabHistory.className = "flex-1 text-center py-2 px-1 text-slate-400 font-medium border-b-2 border-transparent text-xs hover:text-emerald-700";
+    tabNew.className = "flex-1 text-center py-2 px-1 text-slate-400 font-medium border-b-2 border-transparent text-xs hover:text-emerald-700";
+
+    if (tabName === 'history') {
+        historyCont.style.display = 'block';
+        newCont.style.display = 'none';
+        tabHistory.className = "flex-1 text-center py-2 px-1 text-emerald-800 font-bold border-b-2 border-emerald-800 text-xs";
+        renderSalesHistory();
+    } else {
+        historyCont.style.display = 'none';
+        newCont.style.display = 'block';
+        tabNew.className = "flex-1 text-center py-2 px-1 text-emerald-800 font-bold border-b-2 border-emerald-800 text-xs";
+        renderNewSale(); 
+    }
+}
+ 
+ // New functions for history & filters
+
+let currentSalesFilter = 'all'; // Default filter state
+
+function renderSalesHistory() {
+    const container = document.getElementById('sales-history-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="space-y-6">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+                <input id="salesSearch" oninput="runSalesFilter()" placeholder="Search by customer name or mobile..." class="w-full pl-11 p-4 bg-white rounded-2xl shadow-sm text-sm outline-none border border-slate-100">
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-[11px] uppercase font-bold text-slate-400"><i class="fas fa-filter mr-1"></i> Filter by Period</p>
+                <div class="flex gap-2 overflow-x-auto pb-2 hide-scroll">
+                    <button onclick="runSalesFilter('all')" class="sale-filter-btn active-sf whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-emerald-800 text-white">All Time</button>
+                    <button onclick="runSalesFilter('7d')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 7 Days</button>
+                    <button onclick="runSalesFilter('30d')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 30 Days</button>
+                    <button onclick="runSalesFilter('thisMonth')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">This Month</button>
+                    <button onclick="runSalesFilter('3m')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 3 Months</button>
+                    <button onclick="runSalesFilter('custom')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Custom Range</button>
+                </div>
+                <div id="custom-range-inputs" class="flex gap-2 p-3 bg-white rounded-xl shadow-sm border border-slate-50" style="display: none;">
+                    <input id="custom-start" type="date" class="bg-slate-50 p-3 rounded-lg text-xs flex-1 text-slate-400">
+                    <input id="custom-end" type="date" class="bg-slate-50 p-3 rounded-lg text-xs flex-1 text-slate-400">
+                    <button onclick="runSalesFilter('customRange')" class="bg-emerald-800 text-white p-3 rounded-lg text-xs font-bold"><i class="fas fa-check"></i></button>
+                </div>
+            </div>
+
+            <div id="sales-list" class="space-y-4 pt-4 border-t border-slate-100"></div>
+        </div>
+    `;
+    runSalesFilter('all'); // Default load
+}
+
+window.runSalesFilter = (period) => {
+    // Handling UI button active state
+    if (period) {
+        document.querySelectorAll('.sale-filter-btn').forEach(b => {
+            b.classList.remove('bg-emerald-800', 'text-white');
+            b.classList.add('bg-white', 'text-slate-600');
+        });
+        
+        // Handling special cases (custom)
+        const customCont = document.getElementById('custom-range-inputs');
+        if(period === 'custom') {
+            event.target.classList.add('bg-emerald-800', 'text-white');
+            customCont.style.display = 'flex';
+            return; // Don't run filter yet, wait for range
+        } else if(period === 'customRange') {
+             customCont.style.display = 'flex';
+             currentSalesFilter = 'custom';
+        } else {
+             event.target.classList.add('bg-emerald-800', 'text-white');
+             customCont.style.display = 'none';
+             currentSalesFilter = period;
+        }
+    }
+    filterAndDrawSales(currentSalesFilter, document.getElementById('salesSearch').value);
+}
+
+function filterAndDrawSales(filter, search) {
+    const listCont = document.getElementById('sales-list');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let filtered = sales.filter(s => {
+        // Search Filter
+        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+                             (s.mobile || "").toLowerCase().includes(search.toLowerCase());
+        
+        // Period Filter
+        const sDate = new Date(s.date);
+        sDate.setHours(0, 0, 0, 0);
+        const daysDiff = (today - sDate) / (1000 * 60 * 60 * 24);
+
+        if(filter === 'all') return matchesSearch;
+        if(filter === '7d') return matchesSearch && daysDiff <= 7;
+        if(filter === '30d') return matchesSearch && daysDiff <= 30;
+        if(filter === 'thisMonth') return matchesSearch && sDate.getMonth() === today.getMonth() && sDate.getFullYear() === today.getFullYear();
+        if(filter === '3m') return matchesSearch && daysDiff <= 90;
+        if(filter === 'custom') {
+            const start = new Date(document.getElementById('custom-start').value);
+            const end = new Date(document.getElementById('custom-end').value);
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+            return matchesSearch && sDate >= start && sDate <= end;
+        }
+        return matchesSearch;
+    });
+
+    // Draw filtered cards
+    if (filtered.length === 0) {
+        listCont.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">No sales found in this period.</p>`;
+        return;
+    }
+
+    // Sort by date (descending)
+    filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    let html = "";
+    let lastDate = "";
+
+    filtered.forEach(s => {
+        // Handle Date Header
+        const sDateStr = new Date(s.date).toISOString().split('T')[0];
+        let dateHeader = "";
+        
+        if(sDateStr !== lastDate) {
+            let label = "";
+            const daysDiff = (today - new Date(s.date)) / (1000 * 60 * 60 * 24);
+            if(daysDiff === 0) label = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Today</span>';
+            else if(daysDiff === 1) label = '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">Yesterday</span>';
+            else {
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                label = `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">${new Date(s.date).toLocaleDateString('en-GB', options)}</span>`;
+            }
+            dateHeader = `<div class="flex items-center gap-2 text-[10px] mt-8 mb-4">${label}<span class="text-slate-300 font-bold">₹${filtered.filter(sale => sale.date === s.date).reduce((a, b) => a + b.total, 0).toFixed(2)}</span></div>`;
+            lastDate = sDateStr;
+        }
+
+        // Draw Card
+        const itemCount = s.items.length;
+        html += `
+            ${dateHeader}
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4 transition-all active:scale-95">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-50 text-blue-600 w-11 h-11 rounded-full flex items-center justify-center font-bold text-xl">${s.name[0].toUpperCase()}</div>
+                        <div>
+                            <p class="font-bold text-slate-800 text-sm">${s.name}</p>
+                            <p class="text-xs text-slate-400 flex items-center gap-1"><i class="fas fa-phone text-blue-400"></i> ${s.mobile || 'Walk-in'}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="flex items-center gap-1.5 justify-end">
+                            <span class="font-black text-xl text-emerald-800">₹${s.total.toFixed(2)}</span>
+                            ${s.payment === 'Online' ? '<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Online</span>' : '<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Cash</span>'}
+                        </div>
+                        <p class="text-xs text-slate-400">${itemCount} ${itemCount === 1 ? 'item' : 'items'}</p>
+                    </div>
+                </div>
+
+                <div id="med-list-${s.id}" class="space-y-2.5 pt-4 border-t border-slate-100 style="display: none;">
+                    ${s.items.map(i => `
+                        <div class="flex justify-between text-xs items-center">
+                            <span class="text-slate-700 font-medium">${i.name}</span>
+                            <span class="text-slate-400 text-[11px]"><b>${i.qty}</b> × ₹${i.rate.toFixed(2)}</span>
+                            <span class="font-black text-emerald-800">₹${i.total.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                    <div class="pt-2 text-xs text-slate-500 italic flex items-center gap-1.5"><i class="fas fa-map-marker-alt text-rose-400"></i> ${s.address || 'Address N/A'}</div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100/50">
+                    <button onclick="editSale(${s.id})" class="text-[11px] px-4 py-2 rounded-lg bg-white border border-slate-100 text-slate-500 font-bold flex items-center gap-1.5 hover:bg-slate-50 hover:border-blue-200 hover:text-blue-600"><i class="fas fa-edit text-blue-500"></i> Edit</button>
+                    <button onclick="deleteSale(${s.id})" class="text-[11px] px-4 py-2 rounded-lg bg-white border border-rose-100 text-rose-500 font-bold flex items-center gap-1.5 hover:bg-rose-50 hover:border-rose-200"><i class="fas fa-trash text-rose-600"></i> Delete</button>
+                </div>
+            </div>
+        `;
+    });
+    listCont.innerHTML = html;
+}
+
+// DELETE FUNCTION (History mein manage karne ke liye)
+function deleteSale(id) {
+    if(confirm("Are you sure you want to delete this sale record?")) {
+        sales = sales.filter(s => s.id !== id);
+        save();
+        renderSalesHistory(); // Re-draw list
+        updateDashboard(); // Update HomePage stats
+    }
+}
+ 
     function addToCart() {
     const mid = document.getElementById('medSelect').value;
     const qty = parseInt(document.getElementById('medQty').value);
@@ -187,14 +432,22 @@
     const med = inventory.find(m => m.id == mid);
 
     if(!med || qty <= 0 || isNaN(qty)) {
-        alert("Select medicine and enter valid quantity");
+        alert("Please select medicine and enter valid quantity");
         return;
     }
 
+    // Check ki kitna stock available hai
     let existing = cart.find(item => item.id == mid);
+    let currentInCart = existing ? existing.qty : 0;
+    let totalRequested = currentInCart + qty;
+
+    if(totalRequested > med.qty) {
+        alert(`Oops! Stock kam hai. Available: ${med.qty}`);
+        return;
+    }
 
     if(existing) {
-        existing.qty += qty;
+        existing.qty = totalRequested;
         existing.total = existing.qty * existing.rate;
     } else {
         cart.push({
@@ -208,7 +461,8 @@
 
     document.getElementById('medQty').value = "";
     updateCartUI();
-    }
+}
+
       
            function updateCartUI() {
     const container = document.getElementById('cartItems');
@@ -273,15 +527,29 @@
 }
 
 
-    function updateCartQty(index, change) {
-        if (cart[index].qty + change > 0) {
-            cart[index].qty += change;
-            cart[index].total = cart[index].qty * cart[index].rate;
-        } else {
-            cart.splice(index, 1);
+      function updateCartQty(index, change) {
+    const item = cart[index];
+    const med = inventory.find(m => m.id == item.id);
+
+    if (change > 0) { // Agar plus button dabaya hai
+        if (item.qty + 1 > med.qty) {
+            alert("Isse zyada stock nahi hai!");
+            return;
         }
-        updateCartUI();
-    }                 
+        item.qty += 1;
+    } else { // Agar minus button dabaya hai
+        item.qty -= 1;
+    }
+
+    if (item.qty <= 0) {
+        cart.splice(index, 1);
+    } else {
+        item.total = item.qty * item.rate;
+    }
+    
+    updateCartUI();
+}
+               
 
        function confirmSale() {  
         if(cart.length === 0) return alert("Add items to cart first");  
@@ -300,7 +568,7 @@
             let med = inventory.find(m => m.id === item.id);  
             if(med) med.qty -= item.qty;  
         });
-           
+        
         // --- INVENTORY ---
         function renderInventory() {  
 setNav('nav-inv');  
