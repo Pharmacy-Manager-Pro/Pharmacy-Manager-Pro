@@ -123,59 +123,63 @@
 
     // --- SALES ENTRY (AS PER IMAGE) ---  
     let cart = [];  
-    function renderSales() {  
-        setNav('nav-sales');  
-        document.getElementById('main-content').innerHTML = `  
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4">  
-                <h3 class="font-bold flex items-center gap-2"><i class="fas fa-user-circle text-emerald-800"></i> Customer Information</h3>  
-                <input id="cName" placeholder="Customer Name (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">  
-                <input id="cMob" placeholder="Mobile Number (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">  
-                <input id="cAddr" placeholder="Address (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">  
-                <div class="grid grid-cols-2 gap-3">  
-                     <div class="bg-slate-50 p-3 rounded-xl">  
-                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Sale Date</p>  
-                        <input id="saleDate" type="date" value="${new Date().toISOString().split('T')[0]}" class="bg-transparent font-bold text-sm outline-none border-b border-slate-200 w-full">  
-                     </div>  
-                     <div class="bg-slate-50 p-3 rounded-xl flex flex-col justify-center">  
-                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Pay Mode</p>  
-                        <select id="payMode" class="bg-transparent font-bold text-sm outline-none">  
-                            <option value="Cash">Cash</option>  
-                            <option value="Online">Online</option>  
-                        </select>  
-                     </div>  
-                </div>  
-            </div>  
+    function renderSales() {
+    setNav('nav-sales');
+    // Important: Cart initial clean-up jab page load ho
+    cart = []; 
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">  
-                <h3 class="font-bold flex items-center gap-2 mb-4" id="cartHeaderLabel">
-                    <i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart
-                </h3>  
-                  
-                <div class="flex gap-2 mb-4">  
-                    <select id="medSelect" class="flex-1 bg-slate-50 p-3 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">  
-                        <option value="">Select medicine</option>  
-                        ${inventory.map(m => `<option value="${m.id}">${m.name} (Stock: ${m.qty})</option>`).join('')}  
-                    </select>  
-                    <input id="medQty" type="number" placeholder="Qty" class="w-20 bg-slate-50 p-3 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">  
-                    <button onclick="addToCart()" class="bg-emerald-800 text-white px-5 rounded-xl hover:bg-emerald-900">  
-                        <i class="fas fa-plus"></i>
-                    </button> 
-                </div>
+    document.getElementById('main-content').innerHTML = `
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50 space-y-4 mb-4">
+            <h3 class="font-bold flex items-center gap-2"><i class="fas fa-user-circle text-emerald-800"></i> Customer Information</h3>
+            <input id="cName" placeholder="Customer Name (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">
+            <input id="cMob" placeholder="Mobile Number (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">
+            <input id="cAddr" placeholder="Address (Optional)" class="w-full bg-slate-50 border-none p-4 rounded-xl text-sm outline-none">
+            <div class="grid grid-cols-2 gap-3">
+                 <div class="bg-slate-50 p-3 rounded-xl">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Sale Date</p>
+                    <input id="saleDate" type="date" value="${new Date().toISOString().split('T')[0]}" class="bg-transparent font-bold text-sm outline-none border-b border-slate-200 w-full">
+                 </div>
+                 <div class="bg-slate-50 p-3 rounded-xl flex flex-col justify-center">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Pay Mode</p>
+                    <select id="payMode" class="bg-transparent font-bold text-sm outline-none">
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                    </select>
+                 </div>
+            </div>
+        </div>
 
-                <div id="cartItems" class="space-y-3 py-4 border-t border-slate-100 min-h-[50px]"></div>  
-
-                <div class="bg-emerald-50 p-4 rounded-xl flex justify-between items-center mt-4 border border-emerald-100">  
-                    <span class="font-bold text-emerald-900">Total Bill Amount</span>  
-                    <span class="text-xl font-black text-emerald-800" id="totalAmt">₹0.00</span>  
-                </div>  
-
-                <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">  
-                    <i class="fas fa-check-circle"></i> Confirm Sale  
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-50">
+            <h3 class="font-bold flex items-center gap-2 mb-4" id="cartHeaderLabel">
+                <i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart
+            </h3>
+              
+            <div class="flex gap-2 mb-4">
+                <select id="medSelect" class="flex-1 bg-slate-50 p-4 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100">
+                    <option value="">Select medicine</option>
+                    ${inventory.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+                </select>
+                <input id="medQty" type="number" placeholder="Qty" class="w-20 bg-slate-50 p-4 rounded-xl text-sm border-none outline-none ring-1 ring-slate-100 text-center">
+                <button onclick="addToCart()" class="bg-[#1E6B4B] text-white w-14 h-14 rounded-xl flex items-center justify-center text-2xl active:scale-95 transition-transform">
+                    <i class="fas fa-plus"></i>
                 </button>
-            </div>  
-        `;  
-         updateCartUI(); 
-    }  
+            </div>
+
+            <div id="cartItems" class="space-y-3 py-4 border-t border-slate-100 min-h-[50px]"></div>
+
+            <div class="bg-emerald-50 p-4 rounded-xl flex justify-between items-center mt-6 border border-emerald-100">
+                <span class="font-bold text-emerald-900">Total Bill Amount</span>
+                <span class="text-xl font-black text-emerald-800" id="totalAmt">₹0.00</span>
+            </div>
+
+            <button onclick="confirmSale()" class="w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
+                <i class="fas fa-check-circle"></i> Confirm Sale
+            </button>
+        </div>
+    `;
+    updateCartUI();
+}
+
     function addToCart() {
     const mid = document.getElementById('medSelect').value;
     const qty = parseInt(document.getElementById('medQty').value);
@@ -207,49 +211,67 @@
     }
       
            function updateCartUI() {
-        const container = document.getElementById('cartItems');
-        if(!container) return;
+    const container = document.getElementById('cartItems');
+    if(!container) return;
 
-        const header = document.getElementById('cartHeaderLabel');
-        if(header) {
-            let count = cart.reduce((a, b) => a + b.qty, 0);
-            header.innerHTML = `<i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart ${count > 0 ? `<span class="ml-auto bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">${count} items</span>` : ''}`;
-        }
+    // Cart count update karne ke liye
+    const header = document.getElementById('cartHeaderLabel');
+    const totalCount = cart.length;
+    header.innerHTML = `<i class="fas fa-cart-shopping text-emerald-800"></i> Medicine Cart ${totalCount > 0 ? `<span class="ml-auto bg-emerald-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">${totalCount} ${totalCount === 1 ? 'item' : 'items'}</span>` : ''}`;
 
-        if(cart.length === 0) {
-            container.innerHTML = `<div class="flex flex-col items-center py-8 text-slate-300"><i class="fas fa-shopping-cart text-4xl mb-2"></i><p class="text-sm font-medium text-slate-400">Cart is empty</p></div>`;
-            document.getElementById('totalAmt').innerText = "₹0.00";
-            return;
-        }
-
+    if(cart.length === 0) {
         container.innerHTML = `
-            <div class="grid grid-cols-3 text-[10px] uppercase font-bold text-slate-400 px-1 mb-2">
-                <span>Medicine</span><span class="text-center">Qty</span><span class="text-right">Subtotal</span>
-            </div>
-            ${cart.map((item, i) => `
-                <div class="flex flex-col border-b border-slate-50 pb-3 mb-3 last:border-0">
-                    <div class="flex justify-between items-center">
-                        <div class="w-1/3">
-                            <p class="font-bold text-sm text-slate-800 leading-tight">${item.name}</p>
-                            <p class="text-[10px] text-slate-400 mt-0.5">₹${item.rate.toFixed(2)}/unit</p>
-                        </div>
-                        <div class="w-1/3 flex justify-center">
-                            <div class="flex items-center bg-slate-50 rounded-lg px-2 py-1 gap-3 border border-slate-100">
-                                <button onclick="updateCartQty(${i}, -1)" class="text-emerald-600 p-1"><i class="fas fa-minus text-[10px]"></i></button>
-                                <span class="font-bold text-xs w-4 text-center">${item.qty}</span>
-                                <button onclick="updateCartQty(${i}, 1)" class="text-emerald-600 p-1"><i class="fas fa-plus text-[10px]"></i></button>
-                            </div>
-                        </div>
-                        <div class="w-1/3 flex items-center justify-end gap-3">
-                            <span class="font-black text-emerald-800 text-sm">₹${item.total.toFixed(2)}</span>
-                            <button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-400"><i class="fas fa-times text-sm"></i></button>
-                        </div>
-                    </div>
-                </div>
-            `).join('')}
-        `;
-        document.getElementById('totalAmt').innerText = `₹${cart.reduce((a, b) => a + b.total, 0).toFixed(2)}`;
+            <div class="flex flex-col items-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
+                <i class="fas fa-shopping-cart text-4xl text-slate-200 mb-2"></i>
+                <p class="text-slate-400 font-medium">Cart is empty</p>
+                <p class="text-[10px] text-slate-300">Select a medicine and quantity above</p>
+            </div>`;
+        document.getElementById('totalAmt').innerText = "₹0.00";
+        return;
     }
+
+    // Table Header as per Image
+    let html = `
+        <div class="grid grid-cols-3 text-[11px] font-medium text-slate-400 px-1 mb-4">
+            <span>Medicine</span>
+            <span class="text-center">Qty</span>
+            <span class="text-right">Subtotal</span>
+        </div>
+        <div class="space-y-6">
+    `;
+
+    cart.forEach((item, i) => {
+        html += `
+            <div class="flex items-center justify-between">
+                <div class="w-2/5">
+                    <p class="font-bold text-slate-800 text-sm">${item.name}</p>
+                    <p class="text-[11px] text-slate-400">₹${item.rate.toFixed(2)}/unit</p>
+                </div>
+                
+                <div class="flex items-center gap-3 bg-slate-50 rounded-lg p-1 px-2 border border-slate-100">
+                    <button onclick="updateCartQty(${i}, -1)" class="text-slate-400 p-1"><i class="fas fa-minus text-[10px]"></i></button>
+                    <span class="font-bold text-sm w-4 text-center">${item.qty}</span>
+                    <button onclick="updateCartQty(${i}, 1)" class="text-emerald-600 p-1"><i class="fas fa-plus text-[10px]"></i></button>
+                </div>
+
+                <div class="flex items-center gap-3 justify-end w-1/4">
+                    <span class="font-bold text-emerald-800 text-sm">₹${item.total.toFixed(2)}</span>
+                    <button onclick="cart.splice(${i},1);updateCartUI()" class="text-rose-400 ml-2">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+    
+    // Total calculation
+    const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
+    document.getElementById('totalAmt').innerText = `₹${grandTotal.toFixed(2)}`;
+}
+
 
     function updateCartQty(index, change) {
         if (cart[index].qty + change > 0) {
