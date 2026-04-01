@@ -150,7 +150,8 @@
 }
 
     // --- SALES ENTRY (AS PER IMAGE) ---  
-    let cart = [];  
+    let cart = [];
+    let editSaleId = null;
     function renderNewSale() {
     setNav('nav-sales');
     // Important: Cart initial clean-up jab page load ho
@@ -438,37 +439,47 @@ function deleteSale(id) {
 }
  
     function editSale(id) {
+    // 1. Confirmation Pop-up jaisa aapne screenshot mein manga
+    if(!confirm("Are you sure you want to edit this sale record?")) return;
+
     const saleToEdit = sales.find(s => s.id === id);
     if(!saleToEdit) return;
 
-    if(confirm("Dhyan dein: Edit karne par purana record delete ho jayega aur cart mein load ho jayega. Continue?")) {
-        // 1. Pehle purani items ka stock wapas inventory mein add karein (Inventory recover)
-        saleToEdit.items.forEach(item => {
-            let med = inventory.find(m => m.id == item.id);
-            if(med) med.qty += item.qty;
-        });
+    // 1. Edit mode on karein aur ID save karein
+    editSaleId = id;
+    cart = [...saleToEdit.items];
 
-        // 2. Data ko cart aur inputs mein bharein
-        cart = [...saleToEdit.items];
+    // 2. New Sale tab par switch karein
+    showSalesSubTab('new');
+
+    // 3. Form fields mein data bharein (Wait for DOM render)
+    setTimeout(() => {
+        document.getElementById('cName').value = saleToEdit.name;
+        document.getElementById('cMob').value = saleToEdit.mobile;
+        document.getElementById('cAddr').value = saleToEdit.address;
+        document.getElementById('saleDate').value = saleToEdit.date;
+        document.getElementById('payMode').value = saleToEdit.payment;
         
-        // 3. New Sale tab open karein
-        showSalesSubTab('new');
-
-        // 4. Form fill karein (Wait for DOM render)
-        setTimeout(() => {
-            document.getElementById('cName').value = saleToEdit.name;
-            document.getElementById('cMob').value = saleToEdit.mobile;
-            document.getElementById('cAddr').value = saleToEdit.address;
-            document.getElementById('saleDate').value = saleToEdit.date;
-            document.getElementById('payMode').value = saleToEdit.payment;
-            updateCartUI();
-        }, 100);
-
-        // 5. Purana record delete kar dein taaki duplicate na ho
-        sales = sales.filter(s => s.id !== id);
-        save();
-    }
+        // Header aur Button ka text badlein (Screenshot jaisa)
+        const header = document.querySelector('#new-sale-container h2') || document.getElementById('new-sale-container');
+        const headerHtml = `
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-xs text-slate-400">Editing sale record</p>
+                <button onclick="cancelEdit()" class="text-rose-600 text-sm font-bold flex items-center gap-1">
+                    <i class="fas fa-times"></i> Cancel Edit
+                </button>
+            </div>`;
+        header.insertAdjacentHTML('afterbegin', headerHtml);
+        
+        // Confirm Sale button ko Update Sale button bana dein
+        const actionBtn = document.querySelector("button[onclick='confirmSale()']");
+        actionBtn.innerHTML = `<i class="fas fa-save"></i> Update Sale`;
+        actionBtn.className = "w-full bg-emerald-800 text-white p-4 rounded-2xl mt-4 font-bold flex items-center justify-center gap-2 shadow-lg";
+        
+        updateCartUI();
+    }, 100);
 }
+
     
     function addToCart() {
     const mid = document.getElementById('medSelect').value;
