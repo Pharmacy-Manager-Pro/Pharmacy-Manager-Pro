@@ -266,12 +266,13 @@ function renderSalesHistory() {
             <div class="space-y-3">
                 <p class="text-[11px] uppercase font-bold text-slate-400"><i class="fas fa-filter mr-1"></i> Filter by Period</p>
                 <div class="flex gap-2 overflow-x-auto pb-2 hide-scroll">
-                    <button onclick="runSalesFilter('all')" class="sale-filter-btn active-sf whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-emerald-800 text-white">All Time</button>
-                    <button onclick="runSalesFilter('7d')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 7 Days</button>
-                    <button onclick="runSalesFilter('30d')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 30 Days</button>
-                    <button onclick="runSalesFilter('thisMonth')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">This Month</button>
-                    <button onclick="runSalesFilter('3m')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 3 Months</button>
-                    <button onclick="runSalesFilter('custom')" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Custom Range</button>
+                   <button onclick="runSalesFilter('all', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-emerald-800 text-white">All Time</button>
+                   <button onclick="runSalesFilter('7d', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 7 Days</button>
+                   <button onclick="runSalesFilter('30d', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 30 Days</button>
+                   <button onclick="runSalesFilter('thisMonth', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">This Month</button>
+                   <button onclick="runSalesFilter('3m', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Last 3 Months</button>
+                   <button onclick="runSalesFilter('custom', this)" class="sale-filter-btn whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold bg-white text-slate-600 border border-slate-200">Custom Range</button>
+
                 </div>
                 <div id="custom-range-inputs" class="flex gap-2 p-3 bg-white rounded-xl shadow-sm border border-slate-50" style="display: none;">
                     <input id="custom-start" type="date" class="bg-slate-50 p-3 rounded-lg text-xs flex-1 text-slate-400">
@@ -283,63 +284,74 @@ function renderSalesHistory() {
             <div id="sales-list" class="space-y-4 pt-4 border-t border-slate-100"></div>
         </div>
     `;
-    runSalesFilter('all'); // Default load
+    runSalesFilter('all');
 }
 
-window.runSalesFilter = (period) => {
-    // Handling UI button active state
-    if (period) {
-        document.querySelectorAll('.sale-filter-btn').forEach(b => {
-            b.classList.remove('bg-emerald-800', 'text-white');
-            b.classList.add('bg-white', 'text-slate-600');
-        });
-        
-        // Handling special cases (custom)
-        const customCont = document.getElementById('custom-range-inputs');
-        if(period === 'custom') {
-            event.target.classList.add('bg-emerald-800', 'text-white');
-            customCont.style.display = 'flex';
-            return; // Don't run filter yet, wait for range
-        } else if(period === 'customRange') {
-             customCont.style.display = 'flex';
-             currentSalesFilter = 'custom';
-        } else {
-             event.target.classList.add('bg-emerald-800', 'text-white');
-             customCont.style.display = 'none';
-             currentSalesFilter = period;
-        }
+window.runSalesFilter = (period, element) => {
+    // Sabhi buttons ko default (white background + gray border) par lana
+    document.querySelectorAll('.sale-filter-btn').forEach(b => {
+        b.classList.remove('bg-emerald-800', 'text-white', 'border-emerald-800');
+        b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+    });
+
+    // Select kiye gaye button ko active look dena
+    if (element) {
+        element.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+        element.classList.add('bg-emerald-800', 'text-white', 'border-emerald-800');
     }
-    filterAndDrawSales(currentSalesFilter, document.getElementById('salesSearch').value);
-}
 
-function filterAndDrawSales(filter, search) {
+    // Baaki logic same...
+    const customCont = document.getElementById('custom-range-inputs');
+    if (period === 'all' || !period) {
+        currentSalesFilter = 'all';
+        if(customCont) customCont.style.display = 'none';
+    } else if (period === 'custom') {
+        if(customCont) customCont.style.display = 'flex';
+        return;
+    } else {
+        currentSalesFilter = period;
+        if(customCont) customCont.style.display = 'none';
+    }
+
+    const searchVal = document.getElementById('salesSearch') ? document.getElementById('salesSearch').value : "";
+    filterAndDrawSales(currentSalesFilter, searchVal);
+};
+
+
+
+   function filterAndDrawSales(filter, search) {
     const listCont = document.getElementById('sales-list');
+    if(!listCont) return; // Guard clause
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     let filtered = sales.filter(s => {
-        // Search Filter
-        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+        const matchesSearch = (s.name || "").toLowerCase().includes(search.toLowerCase()) ||
                              (s.mobile || "").toLowerCase().includes(search.toLowerCase());
         
-        // Period Filter
+        if (!matchesSearch) return false; // Pehle search check karein
+        if (filter === 'all' || !filter) return true; // Sab dikhao
+
         const sDate = new Date(s.date);
         sDate.setHours(0, 0, 0, 0);
         const daysDiff = (today - sDate) / (1000 * 60 * 60 * 24);
 
-        if(filter === 'all') return matchesSearch;
-        if(filter === '7d') return matchesSearch && daysDiff <= 7;
-        if(filter === '30d') return matchesSearch && daysDiff <= 30;
-        if(filter === 'thisMonth') return matchesSearch && sDate.getMonth() === today.getMonth() && sDate.getFullYear() === today.getFullYear();
-        if(filter === '3m') return matchesSearch && daysDiff <= 90;
+        if(filter === '7d') return daysDiff <= 7;
+        if(filter === '30d') return daysDiff <= 30;
+        if(filter === 'thisMonth') return sDate.getMonth() === today.getMonth() && sDate.getFullYear() === today.getFullYear();
+        if(filter === '3m') return daysDiff <= 90;
         if(filter === 'custom') {
-            const start = new Date(document.getElementById('custom-start').value);
-            const end = new Date(document.getElementById('custom-end').value);
+            const startStr = document.getElementById('custom-start').value;
+            const endStr = document.getElementById('custom-end').value;
+            if(!startStr || !endStr) return true;
+            const start = new Date(startStr);
+            const end = new Date(endStr);
             start.setHours(0,0,0,0);
             end.setHours(23,59,59,999);
-            return matchesSearch && sDate >= start && sDate <= end;
+            return sDate >= start && sDate <= end;
         }
-        return matchesSearch;
+        return true;
     });
 
     // Draw filtered cards
@@ -425,6 +437,39 @@ function deleteSale(id) {
     }
 }
  
+    function editSale(id) {
+    const saleToEdit = sales.find(s => s.id === id);
+    if(!saleToEdit) return;
+
+    if(confirm("Dhyan dein: Edit karne par purana record delete ho jayega aur cart mein load ho jayega. Continue?")) {
+        // 1. Pehle purani items ka stock wapas inventory mein add karein (Inventory recover)
+        saleToEdit.items.forEach(item => {
+            let med = inventory.find(m => m.id == item.id);
+            if(med) med.qty += item.qty;
+        });
+
+        // 2. Data ko cart aur inputs mein bharein
+        cart = [...saleToEdit.items];
+        
+        // 3. New Sale tab open karein
+        showSalesSubTab('new');
+
+        // 4. Form fill karein (Wait for DOM render)
+        setTimeout(() => {
+            document.getElementById('cName').value = saleToEdit.name;
+            document.getElementById('cMob').value = saleToEdit.mobile;
+            document.getElementById('cAddr').value = saleToEdit.address;
+            document.getElementById('saleDate').value = saleToEdit.date;
+            document.getElementById('payMode').value = saleToEdit.payment;
+            updateCartUI();
+        }, 100);
+
+        // 5. Purana record delete kar dein taaki duplicate na ho
+        sales = sales.filter(s => s.id !== id);
+        save();
+    }
+}
+    
     function addToCart() {
     const mid = document.getElementById('medSelect').value;
     const qty = parseInt(document.getElementById('medQty').value);
@@ -552,22 +597,30 @@ function deleteSale(id) {
                
 
        function confirmSale() {  
-        if(cart.length === 0) return alert("Add items to cart first");  
-        const newSale = {  
-            id: Date.now(),  
-            date: new Date().toISOString().split('T')[0],  
-            name: document.getElementById('cName').value || "Walk-in Customer",  
-            mobile: document.getElementById('cMob').value || "N/A",  
-            address: document.getElementById('cAddr').value || "N/A",  
-            items: [...cart],  
-            total: cart.reduce((a,b) => a + b.total, 0),  
-            payment: document.getElementById('payMode').value  
-        };  
-           sales.push(newSale);  
-        cart.forEach(item => {  
-            let med = inventory.find(m => m.id === item.id);  
-            if(med) med.qty -= item.qty;  
-        });
+    if(cart.length === 0) return alert("Pehle cart mein items add karein!");  
+
+    // Input field se selected date uthana
+    const selectedDate = document.getElementById('saleDate').value;
+
+    const newSale = {  
+        id: Date.now(),  
+        date: selectedDate, // Ab ye wahi date save karega jo aapne choose ki hai
+        name: document.getElementById('cName').value || "Walk-in Customer",  
+        mobile: document.getElementById('cMob').value || "N/A",  
+        address: document.getElementById('cAddr').value || "N/A",  
+        items: [...cart],  
+        total: cart.reduce((a,b) => a + b.total, 0),  
+        payment: document.getElementById('payMode').value  
+    };  
+
+    // Sales mein add karein
+    sales.push(newSale);  
+
+    // Stock update karein
+    cart.forEach(item => {  
+        let med = inventory.find(m => m.id == item.id);  
+        if(med) med.qty -= item.qty;  
+    });
         
         // --- INVENTORY ---
         function renderInventory() {  
